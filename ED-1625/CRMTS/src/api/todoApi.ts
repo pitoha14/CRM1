@@ -13,7 +13,7 @@ export async function fetchTodos(filter: string = "all"): Promise<Todo[]> {
     throw new Error("Ошибка при получении задач");
   }
 
-  const result = await res.json(); 
+  const result = await res.json();
 
   if (!Array.isArray(result.data)) {
     throw new Error("Ожидался массив задач в поле data");
@@ -53,5 +53,4 @@ export async function deleteTodo(id: number): Promise<void> {
   if (!res.ok) {
     throw new Error("Ошибка при удалении задачи");
   }
-  await res.json(); 
 }

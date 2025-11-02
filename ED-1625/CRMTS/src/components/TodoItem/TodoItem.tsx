@@ -32,7 +32,7 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
   const handleDelete = async () => {
     try {
       await deleteTodo(todo.id);
-      await updateTasks();
+      await updateTasks(); 
     } catch (error) {
       console.error(error);
       alert("Ошибка при удалении задачи");
@@ -43,20 +43,20 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
     e.preventDefault();
 
     const result = validateTodoTitle(editingTitle);
-  if (!result.valid) {
-    alert(result.error);
-    return;
-  }
+    if (!result.valid) {
+      alert(result.error);
+      return;
+    }
 
-  try {
-    await updateTodo(todo.id, { title: editingTitle.trim() });
-    setIsInEditMode(false);
-    await updateTasks();
-  } catch (error) {
-    console.error(error);
-    alert("Ошибка при обновлении задачи");
-  }
-};
+    try {
+      await updateTodo(todo.id, { title: editingTitle.trim() });
+      setIsInEditMode(false);
+      await updateTasks();
+    } catch (error) {
+      console.error(error);
+      alert("Ошибка при обновлении задачи");
+    }
+  };
 
   return (
     <li className={styles.todoItem}>

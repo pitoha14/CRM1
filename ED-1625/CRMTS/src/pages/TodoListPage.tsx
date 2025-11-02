@@ -14,8 +14,7 @@ type TodosCount = {
 };
 
 export default function TodoListPage() {
-  const [allTodos, setAllTodos] = useState<Todo[]>([]); 
-  const [todos, setTodos] = useState<Todo[]>([]); 
+  const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [todosCount, setTodosCount] = useState<TodosCount>({
     all: 0,
@@ -25,8 +24,8 @@ export default function TodoListPage() {
 
   const updateTasks = async () => {
     try {
-      const fetchedTodos = await fetchTodos("all"); 
-      setAllTodos(fetchedTodos);
+      const fetchedTodos = await fetchTodos(filter);
+      setTodos(fetchedTodos);
 
       const info: TodosCount = {
         all: fetchedTodos.length,
@@ -34,29 +33,11 @@ export default function TodoListPage() {
         completed: fetchedTodos.filter(todo => todo.isDone).length,
       };
       setTodosCount(info);
-
-      applyFilter(fetchedTodos, filter);
     } catch (error) {
       console.error("Ошибка при загрузке задач:", error);
-      setAllTodos([]);
       setTodos([]);
       setTodosCount({ all: 0, inWork: 0, completed: 0 });
     }
-  };
-
-  const applyFilter = (todosArray: Todo[], currentFilter: Filter) => {
-    let filteredTodos: Todo[];
-    switch (currentFilter) {
-      case "inWork":
-        filteredTodos = todosArray.filter(todo => !todo.isDone);
-        break;
-      case "completed":
-        filteredTodos = todosArray.filter(todo => todo.isDone);
-        break;
-      default:
-        filteredTodos = todosArray;
-    }
-    setTodos(filteredTodos);
   };
 
   useEffect(() => {
@@ -64,8 +45,8 @@ export default function TodoListPage() {
   }, []);
 
   useEffect(() => {
-    applyFilter(allTodos, filter);
-  }, [filter, allTodos]);
+    updateTasks();
+  }, [filter]);
 
   return (
     <div className={styles.appContainer}>
@@ -78,7 +59,11 @@ export default function TodoListPage() {
       />
       <ul className={styles.todoList}>
         {todos.map(todo => (
-          <TodoItem key={todo.id} todo={todo} updateTasks={updateTasks} />
+          <TodoItem
+            key={todo.id}
+            todo={todo}
+            updateTasks={updateTasks}
+          />
         ))}
       </ul>
     </div>
