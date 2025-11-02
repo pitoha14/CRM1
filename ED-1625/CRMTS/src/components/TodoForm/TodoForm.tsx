@@ -14,20 +14,20 @@ export default function TodoForm({ updateTasks }: TodoFormProps) {
     e.preventDefault();
 
     const result = validateTodoTitle(inputValue);
-  if (!result.valid) {
-    alert(result.error);
-    return;
-  }
+    if (!result.valid) {
+      alert(result.error);
+      return;
+    }
 
-  try {
-    await addTodo(inputValue.trim());
-    setInputValue("");
-    await updateTasks();
-  } catch (error) {
-    console.error(error);
-    alert("Ошибка при добавлении задачи");
-  }
-};
+    try {
+      await addTodo(inputValue.trim());
+      setInputValue("");
+      await updateTasks();
+    } catch (error) {
+      console.error(error);
+      alert("Ошибка при добавлении задачи");
+    }
+  };
 
   return (
     <form className={styles.todoForm} onSubmit={handleSubmit}>
@@ -38,9 +38,7 @@ export default function TodoForm({ updateTasks }: TodoFormProps) {
         onChange={e => setInputValue(e.target.value)}
         placeholder="Введите задачу"
       />
-      <button type="submit" className={styles.todoAddBtn}>
-        Добавить
-      </button>
+      <button type="submit" className={styles.todoAddBtn}>Добавить</button>
     </form>
   );
 }

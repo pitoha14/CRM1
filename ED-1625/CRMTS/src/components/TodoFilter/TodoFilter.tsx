@@ -1,18 +1,18 @@
 import styles from "./TodoFilter.module.css";
 
-type filtered = 'all' | 'inWork' | 'completed'
+type filtered = 'all' | 'inWork' | 'completed';
 
 type TodoFilterProps = {
-  filter : filtered,
+  filter: filtered;
   setFilter: (filter: filtered) => void;
-  todosCount : {
-    all: number,
-    inWork: number, 
-    completed: number
-  }
-}
+  todosCount: {
+    all: number;
+    inWork: number; 
+    completed: number;
+  };
+};
 
-export default function TodoFilter({ filter, setFilter, todosCount } : TodoFilterProps) {
+export default function TodoFilter({ filter, setFilter, todosCount }: TodoFilterProps) {
   return (
     <div className={styles.todoFilter}>
       <button

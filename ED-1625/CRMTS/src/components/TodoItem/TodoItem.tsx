@@ -42,6 +42,11 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
+    if (editingTitle === undefined || editingTitle.trim() === "") {
+      alert("Задача не может быть пустой");
+      return;
+    }
+
     const result = validateTodoTitle(editingTitle);
     if (!result.valid) {
       alert(result.error);
@@ -78,7 +83,7 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
           <button
             type="button"
             className={styles.cancelBtn}
-            onClick={() => setIsInEditMode(false)}
+            onClick={() => { setIsInEditMode(false); setEditingTitle(todo.title); }}
           >
             Отменить
           </button>
