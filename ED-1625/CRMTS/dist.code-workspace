@@ -1,0 +1,16 @@
+{
+	"folders": [
+		{
+			"path": "../CRM ON TS/dist"
+		},
+		{
+			"path": "../CRM ON TS/node_modules"
+		},
+		{
+			"path": "../CRM ON TS/public"
+		},
+		{
+			"path": "../CRM ON TS/src"
+		}
+	]
+}
