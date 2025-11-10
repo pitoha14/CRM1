@@ -1,15 +1,10 @@
 import styles from "./TodoFilter.module.css";
-
-type filtered = 'all' | 'inWork' | 'completed';
+import type { Filter, TodosCount } from "../../utils/types";
 
 type TodoFilterProps = {
-  filter: filtered;
-  setFilter: (filter: filtered) => void;
-  todosCount: {
-    all: number;
-    inWork: number; 
-    completed: number;
-  };
+  filter: Filter;
+  setFilter: (filter: Filter) => void;
+  todosCount: TodosCount;
 };
 
 export default function TodoFilter({ filter, setFilter, todosCount }: TodoFilterProps) {

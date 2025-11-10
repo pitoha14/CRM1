@@ -1,21 +1,17 @@
-const BASE_URL = "https://easydev.club/api/v1/todos";
+import { TodosCount , Todo} from "../utils/types";
 
-export type Todo = {
-  id: number;
-  title: string;
-  created?: string;
-  isDone?: boolean;
-};
+const BASE_URL = "https://easydev.club/api/v1/todos";
 
 export type TodosResponse = {
   data: Todo[];
-  info: {
-    all: number;
-    inWork: number;
-    completed: number;
-  };
+  info: TodosCount;
   meta?: any;
 };
+
+export type UpdateTodoData = {
+  title? : string,
+  isDone?: boolean,
+}
 
 export async function fetchTodos(filter: string = "all"): Promise<TodosResponse> {
   const res = await fetch(`${BASE_URL}?filter=${filter}`);
@@ -41,7 +37,7 @@ export async function addTodo(title: string): Promise<Todo> {
   return data;
 }
 
-export async function updateTodo(id: number, data: Partial<Todo>): Promise<Todo> {
+export async function updateTodo(id: number, data: UpdateTodoData): Promise<Todo> {
   const res = await fetch(`${BASE_URL}/${id}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },

@@ -2,13 +2,7 @@ import { useState } from "react";
 import { updateTodo, deleteTodo } from "../../api/todoApi";
 import styles from './TodoItem.module.css';
 import { validateTodoTitle } from "../../utils/validate";
-
-type Todo = {
-  id: number;
-  title: string;
-  created?: string;
-  isDone?: boolean;
-};
+import type { Todo } from "../../utils/types.ts";
 
 type TodoItemProps = {
   todo: Todo;
@@ -16,10 +10,10 @@ type TodoItemProps = {
 };
 
 export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
-  const [isInEditMode, setIsInEditMode] = useState(false);
-  const [editingTitle, setEditingTitle] = useState(todo.title);
+  const [isInEditMode, setIsInEditMode] = useState<boolean>(false);
+  const [editingTitle, setEditingTitle] = useState<string>(todo.title);
 
-  const handleToggleDone = async () => {
+  const handleToggleTodoDone = async () => {
     try {
       await updateTodo(todo.id, { isDone: !todo.isDone });
       await updateTasks();
@@ -29,7 +23,7 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
     }
   };
 
-  const handleDelete = async () => {
+  const handleDeleteTodo = async () => {
     try {
       await deleteTodo(todo.id);
       await updateTasks(); 
@@ -42,14 +36,14 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (editingTitle === undefined || editingTitle.trim() === "") {
+    if (!editingTitle || !editingTitle.trim()) {
       alert("Задача не может быть пустой");
       return;
     }
 
-    const result = validateTodoTitle(editingTitle);
-    if (!result.valid) {
-      alert(result.error);
+    const error = validateTodoTitle(editingTitle);
+    if (error) {
+      alert(error);
       return;
     }
 
@@ -68,7 +62,7 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
       <input
         type="checkbox"
         checked={!!todo.isDone}
-        onChange={handleToggleDone}
+        onChange={handleToggleTodoDone}
       />
 
       {isInEditMode ? (
@@ -101,7 +95,7 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
           <button
             type="button"
             className={styles.deleteBtn}
-            onClick={handleDelete}
+            onClick={handleDeleteTodo}
           >
             Удалить
           </button>

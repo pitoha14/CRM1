@@ -1,20 +1,18 @@
 import { useState, useEffect } from "react";
-import TodoForm from "../components/TodoForm/TodoForm";
+import TodoForm from "../components/TodoForm/AddTodoForm";
 import TodoItem from "../components/TodoItem/TodoItem";
 import TodoFilter from "../components/TodoFilter/TodoFilter";
-import { fetchTodos, Todo, TodosResponse } from "../api/todoApi";
+import { fetchTodos, TodosResponse } from "../api/todoApi";
 import styles from "../App.module.css";
+import { type TodosCount, type Filter , type Todo} from "../utils/types";
 
-type Filter = "all" | "inWork" | "completed";
 
 export default function TodoListPage() {
+  const DEFAULT_COUNTS = { all: 0, inWork: 0, completed: 0 }
+
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
-  const [todosCount, setTodosCount] = useState({
-    all: 0,
-    inWork: 0,
-    completed: 0,
-  });
+  const [todosCount, setTodosCount] = useState<TodosCount>(DEFAULT_COUNTS);
 
   const updateTasks = async () => {
     try {
@@ -24,13 +22,9 @@ export default function TodoListPage() {
     } catch (error) {
       console.error("Ошибка при загрузке задач:", error);
       setTodos([]);
-      setTodosCount({ all: 0, inWork: 0, completed: 0 });
+      setTodosCount(DEFAULT_COUNTS);
     }
   };
-
-  useEffect(() => {
-    updateTasks();
-  }, []);
 
   useEffect(() => {
     updateTasks();
