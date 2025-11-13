@@ -1,4 +1,5 @@
-import { TodosCount , Todo} from "../utils/types";
+import axios from "axios";
+import type { Todo, TodosCount } from "../utils/types";
 
 const BASE_URL = "https://easydev.club/api/v1/todos";
 
@@ -9,47 +10,33 @@ export type TodosResponse = {
 };
 
 export type UpdateTodoData = {
-  title? : string,
-  isDone?: boolean,
-}
+  title?: string;
+  isDone?: boolean;
+};
 
 export async function fetchTodos(filter: string = "all"): Promise<TodosResponse> {
-  const res = await fetch(`${BASE_URL}?filter=${filter}`);
-  if (!res.ok) throw new Error("Ошибка при получении задач");
-
-  const result = await res.json();
-  if (!Array.isArray(result.data) || !result.info) {
-    throw new Error("Некорректный ответ от сервера");
+  try {
+    const { data } = await axios.get(BASE_URL, { params: { filter } });
+    if (!Array.isArray(data.data) || !data.info) {
+      throw new Error("Некорректный ответ от сервера");
+    }
+    return data;
+  } catch (error) {
+    console.error("Ошибка при загрузке задач:", error);
+    throw error;
   }
-
-  return result;
 }
 
 export async function addTodo(title: string): Promise<Todo> {
-  const res = await fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, isDone: false }),
-  });
-  if (!res.ok) throw new Error("Ошибка при добавлении задачи");
-
-  const data: Todo = await res.json();
+  const { data } = await axios.post(BASE_URL, { title, isDone: false });
   return data;
 }
 
 export async function updateTodo(id: number, data: UpdateTodoData): Promise<Todo> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Ошибка при обновлении задачи");
-
-  const updated: Todo = await res.json();
-  return updated;
+  const res = await axios.put(`${BASE_URL}/${id}`, data);
+  return res.data;
 }
 
 export async function deleteTodo(id: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Ошибка при удалении задачи");
+  await axios.delete(`${BASE_URL}/${id}`);
 }

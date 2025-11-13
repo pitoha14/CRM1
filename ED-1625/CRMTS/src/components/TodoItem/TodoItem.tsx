@@ -1,8 +1,7 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { updateTodo, deleteTodo } from "../../api/todoApi";
-import styles from './TodoItem.module.css';
-import { validateTodoTitle } from "../../utils/validate";
-import type { Todo } from "../../utils/types.ts";
+import { Checkbox, Button, Input, message } from "antd";
+import type { Todo } from "../../utils/types";
 
 type TodoItemProps = {
   todo: Todo;
@@ -12,94 +11,68 @@ type TodoItemProps = {
 export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
   const [isInEditMode, setIsInEditMode] = useState<boolean>(false);
   const [editingTitle, setEditingTitle] = useState<string>(todo.title);
+  const [isUpdating, setIsUpdating] = useState<boolean>(false);
 
-  const handleToggleTodoDone = async () => {
+  const handleToggleDone = async () => {
     try {
       await updateTodo(todo.id, { isDone: !todo.isDone });
       await updateTasks();
-    } catch (error) {
-      console.error(error);
-      alert("Ошибка при изменении статуса задачи");
+    } catch {
+      message.error("Ошибка при изменении статуса задачи");
     }
   };
 
-  const handleDeleteTodo = async () => {
+  const handleDelete = async () => {
     try {
       await deleteTodo(todo.id);
-      await updateTasks(); 
-    } catch (error) {
-      console.error(error);
-      alert("Ошибка при удалении задачи");
+      await updateTasks();
+      message.success("Задача удалена");
+    } catch {
+      message.error("Ошибка при удалении задачи");
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    if (!editingTitle || !editingTitle.trim()) {
-      alert("Задача не может быть пустой");
+  const handleSave = async () => {
+    const trimmed = editingTitle.trim();
+    if (trimmed.length < 2) {
+      message.error("Задача должна быть минимум 2 символа");
       return;
     }
-
-    const error = validateTodoTitle(editingTitle);
-    if (error) {
-      alert(error);
+    if (trimmed.length > 64) {
+      message.error("Задача не может быть длиннее 64 символов");
       return;
     }
 
     try {
-      await updateTodo(todo.id, { title: editingTitle.trim() });
+      setIsUpdating(true);
+      await updateTodo(todo.id, { title: trimmed });
       setIsInEditMode(false);
       await updateTasks();
-    } catch (error) {
-      console.error(error);
-      alert("Ошибка при обновлении задачи");
+      message.success("Задача обновлена");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
   return (
-    <li className={styles.todoItem}>
-      <input
-        type="checkbox"
-        checked={!!todo.isDone}
-        onChange={handleToggleTodoDone}
-      />
+    <li style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+      <Checkbox checked={!!todo.isDone} onChange={handleToggleDone}>
+        {!isInEditMode ? (
+          <span style={{ textDecoration: todo.isDone ? "line-through" : "none" }}>{todo.title}</span>
+        ) : null}
+      </Checkbox>
 
       {isInEditMode ? (
-        <form onSubmit={handleSubmit} className={styles.editForm}>
-          <input
-            type="text"
-            className={styles.todoItemInput}
-            value={editingTitle}
-            onChange={(e) => setEditingTitle(e.target.value)}
-          />
-          <button type="submit" className={styles.saveBtn}>Сохранить</button>
-          <button
-            type="button"
-            className={styles.cancelBtn}
-            onClick={() => { setIsInEditMode(false); setEditingTitle(todo.title); }}
-          >
-            Отменить
-          </button>
-        </form>
+        <div style={{ display: "flex", gap: 8, flexGrow: 1, marginLeft: 8 }}>
+          <Input value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} disabled={isUpdating} />
+          <Button type="primary" onClick={handleSave} loading={isUpdating}>Сохранить</Button>
+          <Button onClick={() => { setIsInEditMode(false); setEditingTitle(todo.title); }}>Отменить</Button>
+        </div>
       ) : (
-        <>
-          <span className={todo.isDone ? styles.done : ""}>{todo.title}</span>
-          <button
-            type="button"
-            className={styles.editBtn}
-            onClick={() => setIsInEditMode(true)}
-          >
-            Редактировать
-          </button>
-          <button
-            type="button"
-            className={styles.deleteBtn}
-            onClick={handleDeleteTodo}
-          >
-            Удалить
-          </button>
-        </>
+        <div>
+          <Button type="link" onClick={() => setIsInEditMode(true)}>Редактировать</Button>
+          <Button type="link" danger onClick={handleDelete}>Удалить</Button>
+        </div>
       )}
     </li>
   );

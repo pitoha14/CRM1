@@ -1,45 +1,51 @@
 import React, { useState } from "react";
-import styles from "./AddTodoForm.module.css";
 import { addTodo } from "../../api/todoApi";
-import { validateTodoTitle } from "../../utils/validate";
+import { Input, Button, message, Form } from "antd";
 
 type AddTodoFormProps = {
   updateTasks: () => Promise<void>;
 };
 
-export default function AddTodo({ updateTasks }: AddTodoFormProps) {
+export default function AddTodoForm({ updateTasks }: AddTodoFormProps) {
   const [inputValue, setInputValue] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-
-    const trimmedValue = inputValue.trim()
-    const error = validateTodoTitle(trimmedValue);
-    if (error) {
-      alert(error);
+  const handleSubmit = async () => {
+    const trimmed = inputValue.trim();
+    if (trimmed.length < 2) {
+      message.error("Задача должна быть минимум 2 символа");
+      return;
+    }
+    if (trimmed.length > 64) {
+      message.error("Задача не может быть длиннее 64 символов");
       return;
     }
 
     try {
-      await addTodo(trimmedValue);
+      setLoading(true);
+      await addTodo(trimmed);
       setInputValue("");
       await updateTasks();
-    } catch (error) {
-      console.error(error);
-      alert("Ошибка при добавлении задачи");
+      message.success("Задача добавлена");
+    } catch {
+      message.error("Ошибка при добавлении задачи");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <form className={styles.todoForm} onSubmit={handleSubmit}>
-      <input
-        type="text"
-        className={styles.todoInput}
-        value={inputValue}
-        onChange={e => setInputValue(e.target.value)}
-        placeholder="Введите задачу"
-      />
-      <button type="submit" className={styles.todoAddBtn}>Добавить</button>
-    </form>
+    <Form layout="inline" onFinish={handleSubmit} style={{ marginBottom: 16 }}>
+      <Form.Item style={{ flexGrow: 1 }}>
+        <Input
+          placeholder="Введите задачу"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+        />
+      </Form.Item>
+      <Form.Item>
+        <Button type="primary" htmlType="submit" loading={loading}>Добавить</Button>
+      </Form.Item>
+    </Form>
   );
 }

@@ -8,7 +8,7 @@ export type Todo = {
 };
 
 export type TodosCount = {
-    all: number;
-    inWork: number; 
-    completed: number;
-}
+  all: number;
+  inWork: number; 
+  completed: number;
+};
