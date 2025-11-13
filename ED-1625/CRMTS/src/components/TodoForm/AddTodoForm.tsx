@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { addTodo } from "../../api/todoApi";
 import { Input, Button, message, Form } from "antd";
+import '@ant-design/v5-patch-for-react-19';
 
 type AddTodoFormProps = {
   updateTasks: () => Promise<void>;
