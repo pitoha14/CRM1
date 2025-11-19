@@ -1,42 +1,28 @@
 import axios from "axios";
-import type { Todo, TodosCount } from "../utils/types";
+import type { Todo, Filter, ApiResponse } from "../types/types"
 
 const BASE_URL = "https://easydev.club/api/v1/todos";
 
-export type TodosResponse = {
-  data: Todo[];
-  info: TodosCount;
-  meta?: any;
-};
-
-export type UpdateTodoData = {
-  title?: string;
-  isDone?: boolean;
-};
-
-export async function fetchTodos(filter: string = "all"): Promise<TodosResponse> {
-  try {
-    const { data } = await axios.get(BASE_URL, { params: { filter } });
-    if (!Array.isArray(data.data) || !data.info) {
-      throw new Error("Некорректный ответ от сервера");
-    }
-    return data;
-  } catch (error) {
-    console.error("Ошибка при загрузке задач:", error);
-    throw error;
-  }
+export async function fetchTodos(filter: Filter = "all") {
+  const response = await axios.get<ApiResponse<Todo[]>>(BASE_URL, {
+    params: { filter },
+  });
+  return response.data; 
 }
 
-export async function addTodo(title: string): Promise<Todo> {
-  const { data } = await axios.post(BASE_URL, { title, isDone: false });
-  return data;
+export async function addTodo(title: string) {
+  const response = await axios.post<ApiResponse<Todo>>(BASE_URL, {
+    title,
+    isDone: false,
+  });
+  return response.data.data;
 }
 
-export async function updateTodo(id: number, data: UpdateTodoData): Promise<Todo> {
-  const res = await axios.put(`${BASE_URL}/${id}`, data);
-  return res.data;
+export async function updateTodo(id: number, data: Partial<Pick<Todo, "title" | "isDone">>) {
+  const response = await axios.put<ApiResponse<Todo>>(`${BASE_URL}/${id}`, data);
+  return response.data.data;
 }
 
-export async function deleteTodo(id: number): Promise<void> {
+export async function deleteTodo(id: number) {
   await axios.delete(`${BASE_URL}/${id}`);
 }

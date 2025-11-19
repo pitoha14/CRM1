@@ -19,11 +19,21 @@ export default function App() {
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider collapsible>
-        <div style={{ height: 64, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <div
+          style={{
+            height: 64,
+            color: "#fff",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            fontWeight: 700,
+          }}
+        >
           TodoApp
         </div>
         <Menu theme="dark" mode="inline" selectedKeys={[selectedKey]} items={menuItems} />
       </Sider>
+
       <Layout>
         <Content style={{ padding: 24 }}>
           <Routes>

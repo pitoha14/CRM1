@@ -1,40 +1,39 @@
-import React, { useState, useEffect } from "react";
-import TodoForm from "../components/TodoForm/AddTodoForm";
+import React, { useState, useEffect, useCallback } from "react";
+import AddTodoForm from "../components/TodoForm/AddTodoForm";
 import TodoItem from "../components/TodoItem/TodoItem";
 import TodoFilter from "../components/TodoFilter/TodoFilter";
-import { fetchTodos, TodosResponse } from "../api/todoApi";
-import type { Todo, Filter, TodosCount } from "../utils/types";
+import { fetchTodos } from "../api/todoApi";
+import type { Todo, Filter, TodosCount } from "../types/types";
 import { message, List } from "antd";
 
-export default function TodoListPage() {
-  const DEFAULT_COUNTS = { all: 0, inWork: 0, completed: 0 };
+const DEFAULT_COUNTS: TodosCount = { all: 0, inWork: 0, completed: 0 };
 
+export default function TodoListPage() {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filter, setFilter] = useState<Filter>("all");
   const [todosCount, setTodosCount] = useState<TodosCount>(DEFAULT_COUNTS);
 
-  const updateTasks = async () => {
+  const updateTasks = useCallback(async () => {
     try {
-      const response: TodosResponse = await fetchTodos(filter);
+      const response = await fetchTodos(filter);
       setTodos(response.data);
-      setTodosCount(response.info);
-    } catch (error) {
-      console.error(error);
+      setTodosCount(response.info ?? DEFAULT_COUNTS);
+    } catch {
       setTodos([]);
       setTodosCount(DEFAULT_COUNTS);
       message.error("Ошибка при загрузке задач");
     }
-  };
+  }, [filter]);
 
   useEffect(() => {
     updateTasks();
     const interval = setInterval(updateTasks, 5000);
     return () => clearInterval(interval);
-  }, [filter]);
+  }, [updateTasks]);
 
   return (
     <div>
-      <TodoForm updateTasks={updateTasks} />
+      <AddTodoForm updateTasks={updateTasks} />
       <TodoFilter filter={filter} setFilter={setFilter} todosCount={todosCount} />
       <List
         style={{ marginTop: 16 }}

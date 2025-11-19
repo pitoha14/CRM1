@@ -9,6 +9,16 @@ export type Todo = {
 
 export type TodosCount = {
   all: number;
-  inWork: number; 
+  inWork: number;
   completed: number;
+};
+
+export type ApiResponse<T> = {
+  data: T;
+  info?: TodosCount;
+  meta?: {
+    page?: number;
+    limit?: number;
+    total?: number;
+  };
 };

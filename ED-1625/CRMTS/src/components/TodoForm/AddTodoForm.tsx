@@ -1,51 +1,50 @@
-import React, { useState } from "react";
+import React from "react";
+import { Form, Input, Button, message } from "antd";
 import { addTodo } from "../../api/todoApi";
-import { Input, Button, message, Form } from "antd";
-import '@ant-design/v5-patch-for-react-19';
+import { MIN_TITLE_LENGTH, MAX_TITLE_LENGTH } from "../../constants/constant";
 
-type AddTodoFormProps = {
+type Props = {
   updateTasks: () => Promise<void>;
 };
 
-export default function AddTodoForm({ updateTasks }: AddTodoFormProps) {
-  const [inputValue, setInputValue] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+export default function AddTodoForm({ updateTasks }: Props) {
+  const [form] = Form.useForm();
 
-  const handleSubmit = async () => {
-    const trimmed = inputValue.trim();
-    if (trimmed.length < 2) {
-      message.error("Задача должна быть минимум 2 символа");
-      return;
-    }
-    if (trimmed.length > 64) {
-      message.error("Задача не может быть длиннее 64 символов");
-      return;
-    }
-
+  const onFinish = async (values: { title: string }) => {
+    const title = values.title.trim();
     try {
-      setLoading(true);
-      await addTodo(trimmed);
-      setInputValue("");
+      await addTodo(title);
+      form.resetFields();
       await updateTasks();
       message.success("Задача добавлена");
     } catch {
       message.error("Ошибка при добавлении задачи");
-    } finally {
-      setLoading(false);
     }
   };
 
   return (
-    <Form layout="inline" onFinish={handleSubmit} style={{ marginBottom: 16 }}>
-      <Form.Item style={{ flexGrow: 1 }}>
-        <Input
-          placeholder="Введите задачу"
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-        />
+    <Form
+      form={form}
+      layout="inline"
+      onFinish={onFinish}
+      style={{ marginBottom: 16, width: "100%" }}
+    >
+      <Form.Item
+        name="title"
+        rules={[
+          { required: true, message: "Введите задачу" },
+          { min: MIN_TITLE_LENGTH, message: `Минимум ${MIN_TITLE_LENGTH} символа` },
+          { max: MAX_TITLE_LENGTH, message: `Максимум ${MAX_TITLE_LENGTH} символов` },
+        ]}
+        style={{ flexGrow: 1, minWidth: 0 }}
+      >
+        <Input placeholder="Введите задачу" />
       </Form.Item>
+
       <Form.Item>
-        <Button type="primary" htmlType="submit" loading={loading}>Добавить</Button>
+        <Button type="primary" htmlType="submit">
+          Добавить
+        </Button>
       </Form.Item>
     </Form>
   );

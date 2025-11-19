@@ -1,19 +1,19 @@
 import React, { useState } from "react";
+import { Form, Input, Button, Checkbox, message } from "antd";
+import type { Todo } from "../../types/types";
 import { updateTodo, deleteTodo } from "../../api/todoApi";
-import { Checkbox, Button, Input, message } from "antd";
-import type { Todo } from "../../utils/types";
+import { MIN_TITLE_LENGTH, MAX_TITLE_LENGTH } from "../../constants/constant";
 
-type TodoItemProps = {
+type Props = {
   todo: Todo;
   updateTasks: () => Promise<void>;
 };
 
-export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
-  const [isInEditMode, setIsInEditMode] = useState<boolean>(false);
-  const [editingTitle, setEditingTitle] = useState<string>(todo.title);
-  const [isUpdating, setIsUpdating] = useState<boolean>(false);
+export default function TodoItem({ todo, updateTasks }: Props) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
 
-  const handleToggleDone = async () => {
+  const handleToggleIsDone = async () => {
     try {
       await updateTodo(todo.id, { isDone: !todo.isDone });
       await updateTasks();
@@ -32,46 +32,74 @@ export default function TodoItem({ todo, updateTasks }: TodoItemProps) {
     }
   };
 
-  const handleSave = async () => {
-    const trimmed = editingTitle.trim();
-    if (trimmed.length < 2) {
-      message.error("Задача должна быть минимум 2 символа");
-      return;
-    }
-    if (trimmed.length > 64) {
-      message.error("Задача не может быть длиннее 64 символов");
-      return;
-    }
-
+  const handleEditFinish = async (values: { title: string }) => {
+    const title = values.title.trim();
     try {
-      setIsUpdating(true);
-      await updateTodo(todo.id, { title: trimmed });
-      setIsInEditMode(false);
+      setLoading(true);
+      await updateTodo(todo.id, { title });
+      setIsEditing(false);
       await updateTasks();
       message.success("Задача обновлена");
+    } catch {
+      message.error("Ошибка при обновлении задачи");
     } finally {
-      setIsUpdating(false);
+      setLoading(false);
     }
   };
 
   return (
-    <li style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-      <Checkbox checked={!!todo.isDone} onChange={handleToggleDone}>
-        {!isInEditMode ? (
+    <li
+      style={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        marginBottom: 8,
+        gap: 8,
+      }}
+    >
+      <Checkbox checked={!!todo.isDone} onChange={handleToggleIsDone} style={{ flexShrink: 0 }}>
+        {!isEditing && (
           <span style={{ textDecoration: todo.isDone ? "line-through" : "none" }}>{todo.title}</span>
-        ) : null}
+        )}
       </Checkbox>
 
-      {isInEditMode ? (
-        <div style={{ display: "flex", gap: 8, flexGrow: 1, marginLeft: 8 }}>
-          <Input value={editingTitle} onChange={(e) => setEditingTitle(e.target.value)} disabled={isUpdating} />
-          <Button type="primary" onClick={handleSave} loading={isUpdating}>Сохранить</Button>
-          <Button onClick={() => { setIsInEditMode(false); setEditingTitle(todo.title); }}>Отменить</Button>
-        </div>
+      {isEditing ? (
+        <Form
+          onFinish={handleEditFinish}
+          initialValues={{ title: todo.title }}
+          style={{ display: "flex", gap: 8, flexGrow: 1, marginLeft: 8 }}
+        >
+          <Form.Item
+            name="title"
+            rules={[
+              { required: true, message: "Введите задачу" },
+              { min: MIN_TITLE_LENGTH, message: `Минимум ${MIN_TITLE_LENGTH} символа` },
+              { max: MAX_TITLE_LENGTH, message: `Максимум ${MAX_TITLE_LENGTH} символов` },
+            ]}
+            style={{ flexGrow: 1, minWidth: 0 }}
+          >
+            <Input disabled={loading} />
+          </Form.Item>
+
+          <Button type="primary" htmlType="submit" loading={loading}>
+            Сохранить
+          </Button>
+          <Button
+            onClick={() => {
+              setIsEditing(false);
+            }}
+          >
+            Отменить
+          </Button>
+        </Form>
       ) : (
-        <div>
-          <Button type="link" onClick={() => setIsInEditMode(true)}>Редактировать</Button>
-          <Button type="link" danger onClick={handleDelete}>Удалить</Button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <Button type="link" onClick={() => setIsEditing(true)}>
+            Редактировать
+          </Button>
+          <Button type="link" danger onClick={handleDelete}>
+            Удалить
+          </Button>
         </div>
       )}
     </li>
