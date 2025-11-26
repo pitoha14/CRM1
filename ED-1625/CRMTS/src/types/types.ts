@@ -22,3 +22,29 @@ export type ApiResponse<T> = {
     total?: number;
   };
 };
+
+export interface UserRegistration {
+  login: string;
+  username: string;
+  password: string;
+  email: string;
+  phoneNumber?: string;
+}
+
+export interface AuthData {
+  login: string;
+  password: string;
+}
+
+export interface TokenResponse {
+  accessToken: string;
+  refreshToken: string;
+}
+
+export interface Profile {
+  id: number;
+  username: string;
+  email: string;
+  phoneNumber?: string;
+  roles?: string[];
+}

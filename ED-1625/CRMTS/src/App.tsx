@@ -1,47 +1,23 @@
-import React from "react";
-import { Routes, Route, Link, useLocation } from "react-router-dom";
-import { Layout, Menu } from "antd";
-import { UnorderedListOutlined, UserOutlined } from "@ant-design/icons";
-import TodoListPage from "./pages/TodoListPage";
+import { Routes, Route } from "react-router-dom";
+import MainLayout from "./layouts/MainLayout";
+import AuthLayout from "./layouts/AuthLayout";
+import TodoListPage from "./pages/TodoListPage"; 
 import ProfilePage from "./pages/ProfilePage";
-
-const { Sider, Content } = Layout;
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
 
 export default function App() {
-  const loc = useLocation();
-  const selectedKey = loc.pathname === "/" ? "/" : loc.pathname;
-
-  const menuItems = [
-    { key: "/", icon: <UnorderedListOutlined />, label: <Link to="/">Список задач</Link> },
-    { key: "/profile", icon: <UserOutlined />, label: <Link to="/profile">Профиль</Link> },
-  ];
-
   return (
-    <Layout style={{ minHeight: "100vh" }}>
-      <Sider collapsible>
-        <div
-          style={{
-            height: 64,
-            color: "#fff",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontWeight: 700,
-          }}
-        >
-          TodoApp
-        </div>
-        <Menu theme="dark" mode="inline" selectedKeys={[selectedKey]} items={menuItems} />
-      </Sider>
+    <Routes>
+      <Route element={<AuthLayout />}>
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
+      </Route>
 
-      <Layout>
-        <Content style={{ padding: 24 }}>
-          <Routes>
-            <Route path="/" element={<TodoListPage />} />
-            <Route path="/profile" element={<ProfilePage />} />
-          </Routes>
-        </Content>
-      </Layout>
-    </Layout>
+      <Route element={<MainLayout />}>
+        <Route path="/" element={<TodoListPage />} />
+        <Route path="/profile" element={<ProfilePage />} />
+      </Route>
+    </Routes>
   );
 }
