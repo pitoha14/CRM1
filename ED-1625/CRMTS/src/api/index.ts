@@ -40,8 +40,10 @@ api.interceptors.response.use(
         const newAccessToken = response.data.accessToken;
         const newRefreshToken = response.data.refreshToken;
 
-        localStorage.setItem("refreshToken", newRefreshToken);
+        localStorage.setItem("refreshToken", newRefreshToken); // Сохраняем только Refresh Token
         
+        // 💡 Здесь state.auth.user может быть null, но это нормально, 
+        // так как он будет загружен после успешной аутентификации.
         store.dispatch(setCredentials({ 
             accessToken: newAccessToken, 
             user: store.getState().auth.user 
@@ -51,6 +53,7 @@ api.interceptors.response.use(
         return api(originalRequest);
 
       } catch (refreshError) {
+        // Ошибка обновления токена, пользователь должен быть разлогинен
         store.dispatch(logout());
         return Promise.reject(refreshError);
       }

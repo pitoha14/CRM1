@@ -8,9 +8,11 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-  accessToken: localStorage.getItem("accessToken"),
+  // accessToken больше не берется из localStorage и не сохраняется там.
+  accessToken: null, 
   user: null,
-  isAuth: !!localStorage.getItem("accessToken"), 
+  // isAuth будет true только после успешного логина/обновления.
+  isAuth: false, 
 };
 
 const authSlice = createSlice({
@@ -21,14 +23,14 @@ const authSlice = createSlice({
       state.accessToken = action.payload.accessToken;
       state.user = action.payload.user;
       state.isAuth = true;
-      localStorage.setItem("accessToken", action.payload.accessToken);
+      // localStorage.setItem("accessToken", action.payload.accessToken); // <-- Удалено!
     },
     logout: (state) => {
       state.accessToken = null;
       state.user = null;
       state.isAuth = false;
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
+      // localStorage.removeItem("accessToken"); // <-- Удалено!
+      localStorage.removeItem("refreshToken"); // <-- Оставлено
     },
   },
 });

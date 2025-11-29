@@ -15,10 +15,11 @@ export default function LoginPage() {
       const tokenData = await loginUser(values);
       localStorage.setItem("refreshToken", tokenData.refreshToken);
       
-      dispatch(setCredentials({ accessToken: tokenData.accessToken, user: null }));
+      // 💡 Убран первый вызов dispatch(setCredentials) с user: null
 
       const userProfile = await getProfile();
 
+      // 💡 Единый вызов dispatch с полными данными
       dispatch(setCredentials({ accessToken: tokenData.accessToken, user: userProfile }));
 
       message.success("Вы вошли!");
@@ -41,7 +42,7 @@ export default function LoginPage() {
         <Button type="primary" htmlType="submit" block>Войти</Button>
       </Form>
       <div style={{ marginTop: 10, textAlign: "center" }}>
-         Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
       </div>
     </div>
   );
