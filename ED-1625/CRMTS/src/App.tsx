@@ -4,7 +4,8 @@ import { useDispatch } from "react-redux";
 import axios from "axios";
 import { setCredentials, logout } from "./store/authSlice";
 import { getProfile } from "./api/authApi";
-import { BASE_URL } from "./api"; 
+import { BASE_URL } from "./api";
+import { setAccessToken, clearAccessToken } from "./api/tokenService";
 
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
@@ -27,17 +28,17 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
             refreshToken,
           });
           const { accessToken, refreshToken: newRefreshToken } = response.data;
-
           localStorage.setItem("refreshToken", newRefreshToken);
+          setAccessToken(accessToken);
 
-          dispatch(setCredentials({ accessToken, user: null }));
           const userProfile = await getProfile();
-
           dispatch(setCredentials({ accessToken, user: userProfile }));
         } catch (error) {
           dispatch(logout());
+          clearAccessToken();
         }
       }
+
       setLoading(false);
     };
 

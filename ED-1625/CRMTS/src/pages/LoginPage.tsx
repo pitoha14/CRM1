@@ -13,17 +13,18 @@ export default function LoginPage() {
   const onFinish = async (values: AuthData) => {
     try {
       const tokenData = await loginUser(values);
-      localStorage.setItem("refreshToken", tokenData.refreshToken);
-      
-      // 💡 Убран первый вызов dispatch(setCredentials) с user: null
 
       const userProfile = await getProfile();
 
-      // 💡 Единый вызов dispatch с полными данными
-      dispatch(setCredentials({ accessToken: tokenData.accessToken, user: userProfile }));
+      dispatch(
+        setCredentials({
+          accessToken: tokenData.accessToken,
+          user: userProfile,
+        })
+      );
 
       message.success("Вы вошли!");
-      navigate("/"); 
+      navigate("/");
     } catch (error) {
       message.error("Неверный логин или пароль");
     }
@@ -39,10 +40,12 @@ export default function LoginPage() {
         <Form.Item name="password" label="Пароль" rules={[{ required: true }]}>
           <Input.Password />
         </Form.Item>
-        <Button type="primary" htmlType="submit" block>Войти</Button>
+        <Button type="primary" htmlType="submit" block>
+          Войти
+        </Button>
       </Form>
       <div style={{ marginTop: 10, textAlign: "center" }}>
-          Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+        Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
       </div>
     </div>
   );

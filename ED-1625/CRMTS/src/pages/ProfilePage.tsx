@@ -11,25 +11,25 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const fetchData = async () => {
-        try {
-            const userData = await getProfile();
-            if (accessToken) {
-                dispatch(setCredentials({ accessToken, user: userData }));
-            }
-        } catch (e) {
-            console.error("Ошибка загрузки профиля");
+      try {
+        const userData = await getProfile();
+        if (accessToken) {
+          dispatch(setCredentials({ accessToken, user: userData }));
         }
+      } catch (e) {
+        console.error("Ошибка загрузки профиля");
+      }
     };
     fetchData();
   }, []);
 
   const handleLogout = async () => {
     try {
-        await logoutUserApi(); 
+      await logoutUserApi();
     } catch (e) {
-        console.error(e);
+      console.error(e);
     }
-    dispatch(logout()); 
+    dispatch(logout());
     message.info("Вы вышли из системы");
   };
 
@@ -41,10 +41,17 @@ export default function ProfilePage() {
       <Descriptions bordered layout="vertical">
         <Descriptions.Item label="Имя">{user.username}</Descriptions.Item>
         <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-        <Descriptions.Item label="Телефон">{user.phoneNumber || "-"}</Descriptions.Item>
+        <Descriptions.Item label="Телефон">
+          {user.phoneNumber || "-"}
+        </Descriptions.Item>
       </Descriptions>
-      
-      <Button type="primary" danger onClick={handleLogout} style={{ marginTop: 20 }}>
+
+      <Button
+        type="primary"
+        danger
+        onClick={handleLogout}
+        style={{ marginTop: 20 }}
+      >
         Выйти из аккаунта
       </Button>
     </div>

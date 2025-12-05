@@ -34,11 +34,17 @@ export default function TodoListPage() {
   return (
     <div>
       <AddTodoForm updateTasks={updateTasks} />
-      <TodoFilter filter={filter} setFilter={setFilter} todosCount={todosCount} />
+      <TodoFilter
+        filter={filter}
+        setFilter={setFilter}
+        todosCount={todosCount}
+      />
       <List
         style={{ marginTop: 16 }}
         dataSource={todos}
-        renderItem={(todo) => <TodoItem key={todo.id} todo={todo} updateTasks={updateTasks} />}
+        renderItem={(todo) => (
+          <TodoItem key={todo.id} todo={todo} updateTasks={updateTasks} />
+        )}
       />
     </div>
   );

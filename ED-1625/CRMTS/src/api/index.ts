@@ -1,6 +1,11 @@
 import axios from "axios";
-import { store } from "../store/store"; 
-import { logout, setCredentials } from "../store/authSlice";
+import { store } from "../store/store";
+import { setCredentials, logout } from "../store/authSlice";
+import {
+  getAccessToken,
+  setAccessToken,
+  clearAccessToken,
+} from "./tokenService";
 
 export const BASE_URL = "https://easydev.club/api/v1";
 
@@ -8,58 +13,91 @@ const api = axios.create({
   baseURL: BASE_URL,
 });
 
-api.interceptors.request.use((config) => {
-  const state = store.getState();
-  const token = state.auth.accessToken;
+let isRefreshing = false;
+let refreshQueue: Array<(token: string) => void> = [];
 
-  if (token) {
+function addToQueue(callback: (token: string) => void) {
+  refreshQueue.push(callback);
+}
+
+function processQueue(token: string) {
+  refreshQueue.forEach((cb) => cb(token));
+  refreshQueue = [];
+}
+
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
 api.interceptors.response.use(
-  (response) => response, 
+  (response) => response,
+
   async (error) => {
+    if (!error.response) return Promise.reject(error);
+
     const originalRequest = error.config;
+    if (error.response.status !== 401) {
+      return Promise.reject(error);
+    }
+    if (originalRequest._retry) {
+      return Promise.reject(error);
+    }
+    originalRequest._retry = true;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; 
+    const refreshToken = localStorage.getItem("refreshToken");
 
-      try {
-        const refreshToken = localStorage.getItem("refreshToken");
-
-        if (!refreshToken) {
-            throw new Error("Нет рефреш токена");
-        }
-
-        const response = await axios.post(`${BASE_URL}/auth/refresh`, {
-          refreshToken: refreshToken,
-        });
-
-        const newAccessToken = response.data.accessToken;
-        const newRefreshToken = response.data.refreshToken;
-
-        localStorage.setItem("refreshToken", newRefreshToken); // Сохраняем только Refresh Token
-        
-        // 💡 Здесь state.auth.user может быть null, но это нормально, 
-        // так как он будет загружен после успешной аутентификации.
-        store.dispatch(setCredentials({ 
-            accessToken: newAccessToken, 
-            user: store.getState().auth.user 
-        }));
-
-        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-        return api(originalRequest);
-
-      } catch (refreshError) {
-        // Ошибка обновления токена, пользователь должен быть разлогинен
-        store.dispatch(logout());
-        return Promise.reject(refreshError);
-      }
+    if (!refreshToken) {
+      clearAccessToken();
+      store.dispatch(logout());
+      return Promise.reject(error);
     }
 
-    return Promise.reject(error);
+    if (isRefreshing) {
+      return new Promise((resolve) => {
+        addToQueue((token: string) => {
+          if (!originalRequest.headers) originalRequest.headers = {};
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          resolve(api(originalRequest));
+        });
+      });
+    }
+
+    isRefreshing = true;
+
+    try {
+      const res = await axios.post(`${BASE_URL}/auth/refresh`, {
+        refreshToken,
+      });
+
+      const newAccessToken = res.data.accessToken;
+      const newRefreshToken = res.data.refreshToken;
+
+      setAccessToken(newAccessToken);
+      localStorage.setItem("refreshToken", newRefreshToken);
+
+      const currentUser = store.getState().auth.user;
+      store.dispatch(
+        setCredentials({ accessToken: newAccessToken, user: currentUser })
+      );
+
+      processQueue(newAccessToken);
+
+      if (!originalRequest.headers) originalRequest.headers = {};
+      originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+
+      return api(originalRequest);
+    } catch (err) {
+      clearAccessToken();
+      localStorage.removeItem("refreshToken");
+      store.dispatch(logout());
+      return Promise.reject(err);
+    } finally {
+      isRefreshing = false;
+    }
   }
 );
 
