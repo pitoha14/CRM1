@@ -7,7 +7,7 @@ import type { UserRegistration } from "../types/types";
 export default function RegisterPage() {
   const navigate = useNavigate();
 
-  const onFinish = async (values: any) => {
+  const onFinish = async (values: UserRegistration) => {
     try {
       const dataToSend: UserRegistration = {
         login: values.login,
@@ -26,14 +26,13 @@ export default function RegisterPage() {
         navigate("/login");
       }, 1500);
     } catch (error: any) {
-      console.error("Ошибка от сервера:", error.response?.data);
 
       if (error.response?.status === 409) {
         message.error("Такой пользователь уже существует");
       } else if (error.response?.status === 400) {
         const serverMessage =
           error.response?.data?.message ||
-          "Неверные данные. Проверьте формат почты, пароля или логина (могут быть ограничены только буквами).";
+          "Неверные данные. Проверьте формат почты, пароля или логина (могут быть ограничены только латинскими буквами и цифрами).";
         message.error(serverMessage);
       } else {
         message.error("Неизвестная ошибка регистрации");

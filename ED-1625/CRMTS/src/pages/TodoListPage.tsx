@@ -4,7 +4,7 @@ import TodoItem from "../components/TodoItem/TodoItem";
 import TodoFilter from "../components/TodoFilter/TodoFilter";
 import { fetchTodos } from "../api/todoApi";
 import type { Todo, Filter, TodosCount } from "../types/types";
-import { message, List } from "antd";
+import { message, List, Empty } from "antd"; 
 
 const DEFAULT_COUNTS: TodosCount = { all: 0, inWork: 0, completed: 0 };
 
@@ -39,13 +39,25 @@ export default function TodoListPage() {
         setFilter={setFilter}
         todosCount={todosCount}
       />
-      <List
-        style={{ marginTop: 16 }}
-        dataSource={todos}
-        renderItem={(todo) => (
-          <TodoItem key={todo.id} todo={todo} updateTasks={updateTasks} />
-        )}
-      />
+      {todos.length === 0 && filter === "all" ? (
+        <Empty 
+          description="У вас пока нет задач. Добавьте первую задачу выше!" 
+          style={{ marginTop: 50 }} 
+        />
+      ) : todos.length === 0 ? (
+        <Empty 
+          description="Нет задач, соответствующих выбранному фильтру." 
+          style={{ marginTop: 50 }} 
+        />
+      ) : (
+        <List
+          style={{ marginTop: 16 }}
+          dataSource={todos}
+          renderItem={(todo) => (
+            <TodoItem key={todo.id} todo={todo} updateTasks={updateTasks} />
+          )}
+        />
+      )}
     </div>
   );
 }

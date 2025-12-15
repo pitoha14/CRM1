@@ -8,7 +8,8 @@ import type {
 } from "../types/types";
 
 export async function registerUser(data: UserRegistration) {
-  return await api.post<Profile>("/auth/signup", data);
+  const response = await api.post<Profile>("/auth/signup", data);
+  return response.data;
 }
 
 export async function loginUser(data: AuthData) {

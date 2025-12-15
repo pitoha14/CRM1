@@ -13,6 +13,9 @@ import TodoListPage from "./pages/TodoListPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
+import { Layout, Spin } from "antd"; 
+
+const { Content } = Layout;
 
 function AuthLoader({ children }: { children: React.ReactNode }) {
   const dispatch = useDispatch();
@@ -47,17 +50,19 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
 
   if (loading) {
     return (
-      <div
-        style={{
-          minHeight: "100vh",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-          fontSize: 24,
-        }}
-      >
-        Загрузка...
-      </div>
+      <Layout style={{ minHeight: "100vh" }}>
+        <Content
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            fontSize: 24,
+            padding: 50,
+          }}
+        >
+          <Spin size="large" tip="Загрузка..." />
+        </Content>
+      </Layout>
     );
   }
 

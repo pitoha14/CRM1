@@ -1,16 +1,29 @@
-let accessToken: string | null = null;
+class TokenStorage {
+  private accessToken: string | null = null;
 
+  public setAccessToken(token: string | null): void {
+    this.accessToken = token;
+  }
+
+  public getAccessToken(): string | null {
+    return this.accessToken;
+  }
+
+  public clearAccessToken(): void {
+    this.accessToken = null;
+  }
+}
+
+const tokenStorage = new TokenStorage();
 
 export function setAccessToken(token: string | null) {
-accessToken = token;
+  tokenStorage.setAccessToken(token);
 }
-
 
 export function getAccessToken(): string | null {
-return accessToken;
+  return tokenStorage.getAccessToken();
 }
 
-
 export function clearAccessToken() {
-accessToken = null;
+  tokenStorage.clearAccessToken();
 }

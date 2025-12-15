@@ -17,17 +17,18 @@ export default function ProfilePage() {
           dispatch(setCredentials({ accessToken, user: userData }));
         }
       } catch (e) {
-        console.error("Ошибка загрузки профиля");
+        // ИСПРАВЛЕНО: Замена console.error на message.error
+        message.error("Ошибка загрузки профиля");
       }
     };
     fetchData();
-  }, []);
+  }, [dispatch, accessToken]);
 
   const handleLogout = async () => {
     try {
       await logoutUserApi();
     } catch (e) {
-      console.error(e);
+      console.error(e); // Оставляем, так как API-функция уже обрабатывает очистку токена
     }
     dispatch(logout());
     message.info("Вы вышли из системы");

@@ -79,6 +79,8 @@ api.interceptors.response.use(
       setAccessToken(newAccessToken);
       localStorage.setItem("refreshToken", newRefreshToken);
 
+      // Примечание: Используем store.getState() для получения user, 
+      // так как этот файл не является React-компонентом.
       const currentUser = store.getState().auth.user;
       store.dispatch(
         setCredentials({ accessToken: newAccessToken, user: currentUser })
