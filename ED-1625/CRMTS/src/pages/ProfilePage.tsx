@@ -17,7 +17,6 @@ export default function ProfilePage() {
           dispatch(setCredentials({ accessToken, user: userData }));
         }
       } catch (e) {
-        // ИСПРАВЛЕНО: Замена console.error на message.error
         message.error("Ошибка загрузки профиля");
       }
     };
@@ -28,7 +27,7 @@ export default function ProfilePage() {
     try {
       await logoutUserApi();
     } catch (e) {
-      console.error(e); // Оставляем, так как API-функция уже обрабатывает очистку токена
+      console.error(e); 
     }
     dispatch(logout());
     message.info("Вы вышли из системы");
