@@ -1,59 +1,98 @@
-import React, { useEffect } from "react";
-import { Button, Descriptions, message } from "antd";
-import { useDispatch, useSelector } from "react-redux";
-import { getProfile, logoutUserApi } from "../api/authApi";
-import { logout, setCredentials } from "../store/authSlice";
+import React, { useState, useEffect, useCallback } from "react";
+import { Card, Form, Input, Button, message, Spin, Space } from "antd";
+import { useSelector, useDispatch } from "react-redux";
 import { RootState } from "../store/store";
+import { updateProfile, getProfile } from "../api/authApi";
+import { Profile, UserRequest } from "../types/types";
+import { setCredentials } from "../store/authSlice";
 
 export default function ProfilePage() {
-  const dispatch = useDispatch();
   const { user, accessToken } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+
+  const loadProfile = useCallback(async () => {
+    if (!accessToken) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const profileData: Profile = await getProfile();
+      form.setFieldsValue(profileData);
+      dispatch(setCredentials({ accessToken, user: profileData }));
+    } catch (e) {
+      message.error("Ошибка загрузки данных профиля.");
+    } finally {
+      setLoading(false);
+    }
+  }, [form, dispatch, accessToken]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const userData = await getProfile();
-        if (accessToken) {
-          dispatch(setCredentials({ accessToken, user: userData }));
-        }
-      } catch (e) {
-        message.error("Ошибка загрузки профиля");
-      }
-    };
-    fetchData();
-  }, [dispatch, accessToken]);
-
-  const handleLogout = async () => {
-    try {
-      await logoutUserApi();
-    } catch (e) {
-      console.error(e); 
+    if (user) {
+      form.setFieldsValue(user);
+      setLoading(false);
+    } else if (accessToken) {
+      loadProfile();
+    } else {
+      setLoading(false);
     }
-    dispatch(logout());
-    message.info("Вы вышли из системы");
-  };
+  }, [user, form, accessToken, loadProfile]);
 
-  if (!user) return <p>Загрузка данных...</p>;
+  const onFinish = async (values: UserRequest) => {
+    setSubmitting(true);
+    try {
+      const updatedProfile = await updateProfile(values);
+
+      dispatch(setCredentials({ accessToken, user: updatedProfile }));
+
+      message.success("Профиль успешно обновлен!");
+    } catch (e: any) {
+      const errorMessage =
+        e.response?.data?.message || "Ошибка при обновлении профиля";
+      message.error(errorMessage);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  if (loading) {
+    return (
+      <Card
+        title="Мой профиль"
+        style={{ maxWidth: 600, margin: "0 auto", marginTop: 50 }}
+      >
+        <Spin tip="Загрузка данных профиля...">
+          <div style={{ minHeight: 150 }} />
+        </Spin>
+      </Card>
+    );
+  }
 
   return (
-    <div>
-      <h2>Личный кабинет</h2>
-      <Descriptions bordered layout="vertical">
-        <Descriptions.Item label="Имя">{user.username}</Descriptions.Item>
-        <Descriptions.Item label="Email">{user.email}</Descriptions.Item>
-        <Descriptions.Item label="Телефон">
-          {user.phoneNumber || "-"}
-        </Descriptions.Item>
-      </Descriptions>
+    <Card
+      title="Мой Профиль"
+      style={{ maxWidth: 600, margin: "0 auto", marginTop: 50 }}
+    >
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form.Item label="Имя пользователя" name="username">
+          <Input />
+        </Form.Item>
+        <Form.Item label="Email" name="email">
+          <Input disabled />
+        </Form.Item>
+        <Form.Item label="Номер телефона" name="phoneNumber">
+          <Input />
+        </Form.Item>
 
-      <Button
-        type="primary"
-        danger
-        onClick={handleLogout}
-        style={{ marginTop: 20 }}
-      >
-        Выйти из аккаунта
-      </Button>
-    </div>
+        <Form.Item>
+          <Button type="primary" htmlType="submit" loading={submitting}>
+            Сохранить изменения
+          </Button>
+        </Form.Item>
+      </Form>
+    </Card>
   );
 }

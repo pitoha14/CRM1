@@ -13,7 +13,10 @@ import TodoListPage from "./pages/TodoListPage";
 import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
-import { Layout, Spin } from "antd"; 
+import UsersListPage from "./pages/UsersListPage";
+import EditUserPage from "./pages/EditUserPage";
+import EditUserRolesPage from "./pages/EditUserRolesPage"; // ИМПОРТИРОВАН НОВЫЙ КОМПОНЕНТ
+import { Layout, Spin } from "antd";
 
 const { Content } = Layout;
 
@@ -30,13 +33,15 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
           const response = await axios.post(`${BASE_URL}/auth/refresh`, {
             refreshToken,
           });
+
           const { accessToken, refreshToken: newRefreshToken } = response.data;
+
           localStorage.setItem("refreshToken", newRefreshToken);
           setAccessToken(accessToken);
 
           const userProfile = await getProfile();
           dispatch(setCredentials({ accessToken, user: userProfile }));
-        } catch (error) {
+        } catch {
           dispatch(logout());
           clearAccessToken();
         }
@@ -49,40 +54,30 @@ function AuthLoader({ children }: { children: React.ReactNode }) {
   }, [dispatch]);
 
   if (loading) {
-    return (
-      <Layout style={{ minHeight: "100vh" }}>
-        <Content
-          style={{
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            fontSize: 24,
-            padding: 50,
-          }}
-        >
-          <Spin size="large" tip="Загрузка..." />
-        </Content>
-      </Layout>
-    );
+    return <Spin fullscreen tip="Загрузка..." />;
   }
 
   return <>{children}</>;
 }
-
 export default function App() {
-  return (
-    <AuthLoader>
-      <Routes>
-        <Route element={<AuthLayout />}>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-        </Route>
+  return (
+    <AuthLoader>
+      <Routes>
+        <Route element={<AuthLayout />}>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+        </Route>
 
-        <Route element={<MainLayout />}>
-          <Route path="/" element={<TodoListPage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Route>
-      </Routes>
-    </AuthLoader>
-  );
+        <Route element={<MainLayout />}>
+          <Route path="/" element={<TodoListPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+
+          <Route path="/admin/users" element={<UsersListPage />} />
+          <Route path="/admin/users/:id" element={<EditUserPage />} />
+          {/* ИСПРАВЛЕНО: Новый компонент для ролей */}
+          <Route path="/admin/users/:id/roles" element={<EditUserRolesPage />} /> 
+        </Route>
+      </Routes>
+    </AuthLoader>
+  );
 }

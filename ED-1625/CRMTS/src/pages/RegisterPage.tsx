@@ -1,4 +1,3 @@
-import React from "react";
 import { Form, Input, Button, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../api/authApi";

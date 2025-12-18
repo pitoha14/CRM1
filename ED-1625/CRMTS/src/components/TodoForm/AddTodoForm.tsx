@@ -1,7 +1,7 @@
-import React from "react";
-import { Form, Input, Button, message } from "antd";
+import React, { useState } from "react";
+import { Form, Input, Button, message, Space } from "antd";
 import { addTodo } from "../../api/todoApi";
-import { MIN_TITLE_LENGTH, MAX_TITLE_LENGTH } from "../../constants/constant";
+import { MAX_TITLE_LENGTH, MIN_TITLE_LENGTH } from "../../constants/constant";
 
 type Props = {
   updateTasks: () => Promise<void>;
@@ -9,25 +9,30 @@ type Props = {
 
 export default function AddTodoForm({ updateTasks }: Props) {
   const [form] = Form.useForm();
+  const [loading, setLoading] = useState(false);
 
   const onFinish = async (values: { title: string }) => {
     const title = values.title.trim();
+    if (!title) return;
+
     try {
+      setLoading(true);
       await addTodo(title);
       form.resetFields();
       await updateTasks();
-      message.success("Задача добавлена");
+      message.success("Задача добавлена!");
     } catch {
       message.error("Ошибка при добавлении задачи");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
     <Form
       form={form}
-      layout="inline"
       onFinish={onFinish}
-      style={{ marginBottom: 16, width: "100%" }}
+      style={{ marginBottom: 24 }}
     >
       <Form.Item
         name="title"
@@ -36,15 +41,18 @@ export default function AddTodoForm({ updateTasks }: Props) {
           { min: MIN_TITLE_LENGTH, message: `Минимум ${MIN_TITLE_LENGTH} символа` },
           { max: MAX_TITLE_LENGTH, message: `Максимум ${MAX_TITLE_LENGTH} символов` },
         ]}
-        style={{ flexGrow: 1, minWidth: 0 }}
+        style={{ margin: 0 }}
       >
-        <Input placeholder="Введите задачу" />
-      </Form.Item>
-
-      <Form.Item>
-        <Button type="primary" htmlType="submit">
-          Добавить
-        </Button>
+        <Space.Compact style={{ width: '100%' }}>
+          <Input 
+            placeholder="Введите новую задачу" 
+            disabled={loading}
+            style={{ width: '100%' }} 
+          />
+          <Button type="primary" htmlType="submit" loading={loading} style={{ flexShrink: 0 }}>
+            Добавить
+          </Button>
+        </Space.Compact>
       </Form.Item>
     </Form>
   );
