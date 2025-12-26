@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Table,
   Button,
@@ -9,6 +9,8 @@ import {
   Tag,
   Space,
 } from "antd";
+import type { ColumnsType, TablePaginationConfig } from "antd/es/table";
+import type { SorterResult } from "antd/es/table/interface";
 import { useNavigate } from "react-router-dom";
 import {
   fetchUsers,
@@ -23,47 +25,29 @@ import type { UserTableItem, UserFilters, Roles } from "../types/types";
 const INITIAL_FILTERS: UserFilters = {
   page: 1,
   limit: 20,
-  sortBy: "date",
-  sortOrder: "desc",
+  sortBy: undefined,
+  sortOrder: undefined,
+  search: undefined,
   isBlocked: undefined,
 };
 
-const RoleDisplay: React.FC<{ roles: Roles[] }> = ({ roles }) => (
-  <Space size={[0, 8]} wrap>
-    {roles.map((role) => (
-      <Tag
-        key={role}
-        color={
-          role === "ADMIN"
-            ? "red"
-            : role === "MODERATOR"
-            ? "orange"
-            : "blue"
-        }
-      >
-        {role}
-      </Tag>
-    ))}
-  </Space>
-);
-
 export default function UsersListPage() {
   const navigate = useNavigate();
-  const [users, setUsers] = useState<UserTableItem[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [filters, setFilters] = useState<UserFilters>(INITIAL_FILTERS);
-  const [total, setTotal] = useState(0);
-  const [searchValue, setSearchValue] = useState("");
-
   const { user } = useSelector((state: RootState) => state.auth);
   const isAdmin = user?.roles?.includes("ADMIN" as Roles);
+
+  const [users, setUsers] = useState<UserTableItem[]>([]);
+  const [filters, setFilters] = useState<UserFilters>(INITIAL_FILTERS);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [searchValue, setSearchValue] = useState("");
 
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetchUsers(filters);
-      setUsers(response.data);
-      setTotal(response.meta.totalAmount);
+      const res = await fetchUsers(filters);
+      setUsers(res.data);
+      setTotal(res.meta.totalAmount);
     } catch {
       message.error("Ошибка загрузки пользователей");
     } finally {
@@ -75,31 +59,51 @@ export default function UsersListPage() {
     loadUsers();
   }, [loadUsers]);
 
-  const handleSearch = () => {
-    setFilters((prev) => ({
-      ...prev,
-      search: searchValue || undefined,
-      page: 1,
-    }));
-  };
-
-  const handleBlockStatusFilter = (value: string) => {
-    const map: Record<string, boolean | undefined> = {
-      all: undefined,
-      active: false,
-      blocked: true,
-    };
+  const handleTableChange = (
+    pagination: TablePaginationConfig,
+    _: any,
+    sorter: SorterResult<UserTableItem> | SorterResult<UserTableItem>[]
+  ) => {
+    const s = sorter as SorterResult<UserTableItem>;
 
     setFilters((prev) => ({
       ...prev,
-      isBlocked: map[value],
-      page: 1,
+      page: pagination.current,
+      sortBy: s.order ? (s.field as string) : undefined,
+      sortOrder:
+        s.order === "ascend"
+          ? "asc"
+          : s.order === "descend"
+          ? "desc"
+          : undefined,
     }));
   };
 
-  const columns = [
-    { title: "Имя", dataIndex: "username", sorter: true },
-    { title: "Email", dataIndex: "email", sorter: true },
+  const handleAction = async (action: () => Promise<any>) => {
+    try {
+      await action();
+      message.success("Операция выполнена");
+      await loadUsers(); 
+    } catch {
+      message.error("Ошибка операции");
+    }
+  };
+
+  const columns: ColumnsType<UserTableItem> = [
+    {
+      title: "Имя пользователя",
+      dataIndex: "username",
+      sorter: true,
+    },
+    {
+      title: "Email",
+      dataIndex: "email",
+      sorter: true,
+    },
+    {
+      title: "Дата регистрации",
+      dataIndex: "date",
+    },
     {
       title: "Статус",
       dataIndex: "isBlocked",
@@ -112,22 +116,45 @@ export default function UsersListPage() {
     {
       title: "Роли",
       dataIndex: "roles",
-      render: (roles: Roles[]) => <RoleDisplay roles={roles} />,
+      render: (roles: Roles[]) =>
+        roles.map((r) => (
+          <Tag
+            key={r}
+            color={
+              r === "ADMIN" ? "red" : r === "MODERATOR" ? "orange" : "blue"
+            }
+          >
+            {r}
+          </Tag>
+        )),
+    },
+    {
+      title: "Телефон",
+      dataIndex: "phoneNumber",
     },
     {
       title: "Действия",
-      render: (_: any, record: UserTableItem) => (
+      render: (_, record) => (
         <Space>
-          <Button onClick={() => navigate(`/admin/users/${record.id}`)} type="link">
+          <Button type="link" onClick={() => navigate(`/admin/users/${record.id}`)}>
             Профиль
+          </Button>
+
+          <Button
+            type="link"
+            onClick={() => navigate(`/admin/users/${record.id}/roles`)}
+          >
+            Роли
           </Button>
 
           <Popconfirm
             title="Подтвердите действие"
             onConfirm={() =>
-              record.isBlocked
-                ? unblockUser(record.id)
-                : blockUser(record.id)
+              handleAction(() =>
+                record.isBlocked
+                  ? unblockUser(record.id)
+                  : blockUser(record.id)
+              )
             }
           >
             <Button type="link" danger={!record.isBlocked}>
@@ -138,7 +165,9 @@ export default function UsersListPage() {
           {isAdmin && (
             <Popconfirm
               title="Удалить пользователя?"
-              onConfirm={() => deleteUser(record.id)}
+              onConfirm={() =>
+                handleAction(() => deleteUser(record.id))
+              }
             >
               <Button type="link" danger>
                 Удалить
@@ -155,22 +184,31 @@ export default function UsersListPage() {
       <h2>Пользователи</h2>
 
       <Space style={{ marginBottom: 16 }}>
-        <Space.Compact>
-          <Input
-            placeholder="Поиск по имени или email"
-            value={searchValue}
-            onChange={(e) => setSearchValue(e.target.value)}
-            allowClear
-          />
-          <Button type="primary" onClick={handleSearch}>
-            Найти
-          </Button>
-        </Space.Compact>
+        <Input
+          placeholder="Поиск по имени или email"
+          value={searchValue}
+          onChange={(e) => setSearchValue(e.target.value)}
+          onPressEnter={() =>
+            setFilters((p) => ({
+              ...p,
+              search: searchValue || undefined,
+              page: 1,
+            }))
+          }
+          allowClear
+        />
 
         <Select
           defaultValue="all"
           style={{ width: 200 }}
-          onChange={handleBlockStatusFilter}
+          onChange={(v) =>
+            setFilters((p) => ({
+              ...p,
+              isBlocked:
+                v === "all" ? undefined : v === "blocked" ? true : false,
+              page: 1,
+            }))
+          }
           options={[
             { value: "all", label: "Все пользователи" },
             { value: "active", label: "Активные" },
@@ -184,12 +222,11 @@ export default function UsersListPage() {
         loading={loading}
         dataSource={users}
         columns={columns}
+        onChange={handleTableChange}
         pagination={{
           current: filters.page,
           pageSize: filters.limit,
           total,
-          onChange: (page) =>
-            setFilters((prev) => ({ ...prev, page })),
         }}
       />
     </>

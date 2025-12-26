@@ -2,120 +2,108 @@ import React, { useEffect, useState } from "react";
 import { Form, Input, Button, message, Card, Spin, Space } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchUserById, updateUserData } from "../api/adminApi";
-import { UserTableItem, UserRequest } from "../types/types";
+import type { UserTableItem, UserRequest } from "../types/types";
 
 export default function EditUserPage() {
-  const { id } = useParams<{ id: string }>();
-  const navigate = useNavigate();
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const userId = Number(id);
+  const { id } = useParams<{ id: string }>();
+  const navigate = useNavigate();
+  const [form] = Form.useForm();
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [original, setOriginal] = useState<UserRequest>({});
+  const userId = Number(id);
 
-  useEffect(() => {
-    const loadUserData = async () => {
-      if (!userId) return;
-      try {
-        const userData: UserTableItem = await fetchUserById(userId);
-        form.setFieldsValue({
-          username: userData.username,
-          email: userData.email,
-          phoneNumber: userData.phoneNumber,
-        });
-      } catch (e) {
-        message.error("Ошибка загрузки данных пользователя");
-        navigate("/admin/users");
-      } finally {
-        setLoading(false);
-      }
-    };
-    loadUserData();
-  }, [userId, form, navigate]);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const user: UserTableItem = await fetchUserById(userId);
+        form.setFieldsValue(user);
+        setOriginal({
+          username: user.username,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+        });
+      } catch {
+        message.error("Ошибка загрузки пользователя");
+        navigate("/admin/users");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [userId, form, navigate]);
 
-  const onFinish = async (values: UserRequest) => {
-    setSubmitting(true);
-    try {
-      const originalValues = form.getFieldsValue();
+  const onFinish = async (values: UserRequest) => {
+    const changes: UserRequest = {};
 
-      const changes: UserRequest = {};
-      if (values.username !== originalValues.username)
-        changes.username = values.username;
-      
-      if (values.phoneNumber !== originalValues.phoneNumber)
-        changes.phoneNumber = values.phoneNumber;
+    if (values.username !== original.username)
+      changes.username = values.username;
 
-      if (Object.keys(changes).length === 0) {
-        message.info("Нет изменений для сохранения.");
-        return;
-      }
+    if (values.email !== original.email)
+      changes.email = values.email;
 
-      await updateUserData(userId, changes);
-      message.success("Данные пользователя успешно обновлены!");
+    if (values.phoneNumber !== original.phoneNumber)
+      changes.phoneNumber = values.phoneNumber;
 
-      const updatedData: UserTableItem = await fetchUserById(userId);
-      form.setFieldsValue(updatedData);
-    } catch (e: any) {
-      const errorMessage =
-        e.response?.data?.message || "Ошибка при обновлении данных";
-      message.error(errorMessage);
-    } finally {
-      setSubmitting(false);
-    }
-  };
+    if (!Object.keys(changes).length) {
+      message.info("Нет изменений для сохранения");
+      return;
+    }
 
-  const handleGoBack = () => {
-    navigate("/admin/users");
-  };
+    setSubmitting(true);
+    try {
+      await updateUserData(userId, changes);
+      message.success("Пользователь обновлён");
+      setOriginal(values);
+    } catch {
+      message.error("Ошибка обновления данных");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
-  if (loading) {
+  if (loading) {
+    return (
+      <Card title="Профиль пользователя">
+        <Spin />
+      </Card>
+    );
+  }
+
   return (
-    <Card title="Профиль пользователя" style={{ maxWidth: 600, margin: "0 auto" }}>
-      <Spin tip="Загрузка данных пользователя...">
-        <div style={{ minHeight: 150 }} />
-      </Spin>
+    <Card title={`Профиль пользователя (ID ${userId})`}>
+      <Form form={form} layout="vertical" onFinish={onFinish}>
+        <Form.Item
+          name="username"
+          label="Имя пользователя"
+          rules={[{ required: true }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item
+          name="email"
+          label="Email"
+          rules={[{ type: "email", required: true }]}
+        >
+          <Input />
+        </Form.Item>
+
+        <Form.Item name="phoneNumber" label="Номер телефона">
+          <Input />
+        </Form.Item>
+
+        <Form.Item>
+          <Space>
+            <Button type="primary" htmlType="submit" loading={submitting}>
+              Сохранить
+            </Button>
+            <Button onClick={() => navigate("/admin/users")}>
+              Вернуться
+            </Button>
+          </Space>
+        </Form.Item>
+      </Form>
     </Card>
   );
-}
-
-  return (
-    <Card
-      title={`Редактирование профиля пользователя: ID ${userId}`}
-      style={{ maxWidth: 600, margin: "0 auto" }}
-    >
-      <Form
-        form={form}
-        layout="vertical"
-        onFinish={onFinish}
-        initialValues={{ username: "", email: "", phoneNumber: "" }}
-      >
-        <Form.Item
-          name="username"
-          label="Имя пользователя"
-          rules={[{ required: true, message: "Введите имя пользователя" }]}
-        >
-          <Input />
-        </Form.Item>
-        <Form.Item
-          name="email"
-          label="Email"
-        >
-          <Input disabled /> 
-        </Form.Item>
-        <Form.Item name="phoneNumber" label="Номер телефона">
-          <Input />
-        </Form.Item>
-
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              Сохранить
-            </Button>
-            <Button onClick={handleGoBack}>
-              Вернуться к таблице
-            </Button>
-          </Space>
-        </Form.Item>
-      </Form>
-    </Card>
-  );
 }
