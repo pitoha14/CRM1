@@ -3,19 +3,19 @@ import type {
   UserFilters,
   UsersListResponse,
   UserTableItem,
-  UserRolesRequest,
   UserRequest,
+  Roles,
 } from "../types/types";
 
-export async function fetchUsers(filters: UserFilters): Promise<UsersListResponse> {
-  const response = await api.get<UsersListResponse>("/admin/users", {
-    params: filters,
-  });
+export async function fetchUsers(
+  filters: UserFilters
+): Promise<UsersListResponse> {
+  const response = await api.get("/admin/users", { params: filters });
   return response.data;
 }
 
 export async function fetchUserById(id: number): Promise<UserTableItem> {
-  const response = await api.get<UserTableItem>(`/admin/users/${id}`);
+  const response = await api.get(`/admin/users/${id}`);
   return response.data;
 }
 
@@ -23,29 +23,28 @@ export async function updateUserData(
   id: number,
   data: UserRequest
 ): Promise<UserTableItem> {
-  const response = await api.put<UserTableItem>(`/admin/users/${id}`, data);
+  const response = await api.put(`/admin/users/${id}`, data);
   return response.data;
 }
 
 export async function updateUserRoles(
   id: number,
-  data: UserRolesRequest
+  roles: Roles[]
 ): Promise<UserTableItem> {
-  const response = await api.put<UserTableItem>(
+  const response = await api.post<UserTableItem>(
     `/admin/users/${id}/rights`,
-    data
+    { roles } 
   );
   return response.data;
 }
 
-
 export async function blockUser(id: number): Promise<UserTableItem> {
-  const response = await api.post<UserTableItem>(`/admin/users/${id}/block`);
+  const response = await api.post(`/admin/users/${id}/block`);
   return response.data;
 }
 
 export async function unblockUser(id: number): Promise<UserTableItem> {
-  const response = await api.post<UserTableItem>(`/admin/users/${id}/unblock`);
+  const response = await api.post(`/admin/users/${id}/unblock`);
   return response.data;
 }
 

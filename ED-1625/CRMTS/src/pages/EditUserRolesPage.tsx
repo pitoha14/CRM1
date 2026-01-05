@@ -12,7 +12,7 @@ import {
 } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
 import { fetchUserById, updateUserRoles } from "../api/adminApi";
-import { UserTableItem, Roles, UserRolesRequest } from "../types/types";
+import type { UserTableItem, Roles } from "../types/types";
 
 const ALL_ROLES: Roles[] = ["USER", "MODERATOR", "ADMIN"];
 
@@ -23,113 +23,106 @@ export default function EditUserRolesPage() {
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [username, setUsername] = useState("");
+  const [originalRoles, setOriginalRoles] = useState<Roles[]>([]);
   const userId = Number(id);
 
   useEffect(() => {
-    const loadUserData = async () => {
-      if (!userId) return;
+    const load = async () => {
       try {
-        const userData: UserTableItem = await fetchUserById(userId);
-        setUsername(userData.username);
-        form.setFieldsValue({
-          roles: userData.roles,
-        });
-      } catch (e) {
-        message.error("Ошибка загрузки данных пользователя");
+        const user: UserTableItem = await fetchUserById(userId);
+        setUsername(user.username);
+        setOriginalRoles(user.roles);
+        form.setFieldsValue({ roles: user.roles });
+      } catch {
+        message.error("Ошибка загрузки пользователя");
         navigate("/admin/users");
       } finally {
         setLoading(false);
       }
     };
-    loadUserData();
+    load();
   }, [userId, form, navigate]);
 
   const onFinish = async (values: { roles: Roles[] }) => {
+    const newRoles = values.roles ?? [];
+
+    const isSame =
+      newRoles.length === originalRoles.length &&
+      newRoles.every((r) => originalRoles.includes(r));
+
+    if (isSame) {
+      message.info("Роли не изменились");
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const data: UserRolesRequest = { roles: values.roles };
-
-      await updateUserRoles(userId, data);
-      message.success(`Роли пользователя ${username} успешно обновлены!`);
+      await updateUserRoles(userId, values.roles);
+      message.success(`Роли пользователя ${username} обновлены`);
+      setOriginalRoles(newRoles);
     } catch (e: any) {
-      const errorMessage =
-        e.response?.data?.message || "Ошибка при обновлении ролей";
-      message.error(errorMessage);
+      message.error(
+        e.response?.data?.message || "Ошибка при обновлении ролей"
+      );
     } finally {
       setSubmitting(false);
     }
   };
 
-  const handleGoBack = () => {
-    navigate("/admin/users");
-  };
-
   if (loading) {
-  return (
-    <Card title="Управление ролями" style={{ maxWidth: 600, margin: "0 auto" }}>
-      <Spin tip="Загрузка ролей пользователя...">
-        <div style={{ minHeight: 150 }} />
-      </Spin>
-    </Card>
-  );
-}
+    return (
+      <Card title="Управление ролями" style={{ maxWidth: 600, margin: "0 auto" }}>
+        <Spin />
+      </Card>
+    );
+  }
 
   return (
     <Card
-      title={`Управление ролями пользователя: ${username} (ID: ${userId})`}
+      title={`Роли пользователя: ${username} (ID ${userId})`}
       style={{ maxWidth: 600, margin: "0 auto" }}
     >
-           {" "}
       <Form form={form} layout="vertical" onFinish={onFinish}>
-               {" "}
         <Form.Item
           name="roles"
-          label="Назначенные роли"
+          label="Роли"
           rules={[
             {
               validator: (_, value: Roles[]) =>
-                value && value.length > 0
+                value?.length
                   ? Promise.resolve()
-                  : Promise.reject(new Error("Выберите хотя бы одну роль")),
+                  : Promise.reject(
+                      new Error("Нужно выбрать хотя бы одну роль")
+                    ),
             },
           ]}
         >
-
           <Checkbox.Group style={{ width: "100%" }}>
-
             <Row>
-
               {ALL_ROLES.map((role) => (
                 <Col span={8} key={role}>
-                                    <Checkbox value={role}>{role}</Checkbox>   
-
+                  <Checkbox value={role}>{role}</Checkbox>
                 </Col>
               ))}
-
             </Row>
-
           </Checkbox.Group>
-
         </Form.Item>
 
         <Form.Item>
-
           <Space>
-
-            <Button type="primary" htmlType="submit" loading={submitting}>
-                            Сохранить роли  
+            <Button
+              type="primary"
+              htmlType="submit"
+              loading={submitting}
+            >
+              Сохранить
             </Button>
-
-            <Button onClick={handleGoBack}>
-                            Вернуться к таблице            {" "}
+            <Button onClick={() => navigate("/admin/users")}>
+              Назад
             </Button>
-                     {" "}
           </Space>
-                 {" "}
         </Form.Item>
-             {" "}
       </Form>
-         {" "}
     </Card>
   );
 }
