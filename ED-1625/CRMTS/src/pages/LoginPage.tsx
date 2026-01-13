@@ -3,7 +3,8 @@ import { Form, Input, Button, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { loginUser, getProfile } from "../api/authApi";
-import { setCredentials } from "../store/authSlice";
+import { setUser } from "../store/authSlice";
+import { setAccessToken } from "../api/tokenService";
 import type { AuthData } from "../types/types";
 
 export default function LoginPage() {
@@ -12,32 +13,29 @@ export default function LoginPage() {
 
   const onFinish = async (values: AuthData) => {
     try {
-      const tokenData = await loginUser(values);
+      const { accessToken, refreshToken } = await loginUser(values);
 
-      const userProfile = await getProfile();
+      setAccessToken(accessToken);
+      localStorage.setItem("refreshToken", refreshToken);
 
-      dispatch(
-        setCredentials({
-          accessToken: tokenData.accessToken,
-          user: userProfile,
-        })
-      );
+      const profile = await getProfile();
+      dispatch(setUser(profile));
 
       message.success("Вы вошли!");
       navigate("/");
-    } catch (error) {
+    } catch {
       message.error("Неверный логин или пароль");
     }
   };
 
   return (
     <div>
-      <h2 style={{ textAlign: "center" }}>Вход в систему</h2>
+      <h2 style={{ textAlign: "center" }}>Вход</h2>
       <Form layout="vertical" onFinish={onFinish}>
-        <Form.Item name="login" label="Логин" rules={[{ required: true }]}>
+        <Form.Item name="login" rules={[{ required: true }]}>
           <Input />
         </Form.Item>
-        <Form.Item name="password" label="Пароль" rules={[{ required: true }]}>
+        <Form.Item name="password" rules={[{ required: true }]}>
           <Input.Password />
         </Form.Item>
         <Button type="primary" htmlType="submit" block>
@@ -45,7 +43,7 @@ export default function LoginPage() {
         </Button>
       </Form>
       <div style={{ marginTop: 10, textAlign: "center" }}>
-        Нет аккаунта? <Link to="/register">Зарегистрироваться</Link>
+        <Link to="/register">Регистрация</Link>
       </div>
     </div>
   );

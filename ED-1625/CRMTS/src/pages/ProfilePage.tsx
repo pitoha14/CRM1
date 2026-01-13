@@ -1,97 +1,88 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { Card, Form, Input, Button, message, Spin, Space } from "antd";
+import React, { useEffect, useState, useCallback } from "react";
+import { Card, Form, Input, Button, message, Spin } from "antd";
 import { useSelector, useDispatch } from "react-redux";
-import { RootState } from "../store/store";
-import { updateProfile, getProfile } from "../api/authApi";
-import { Profile, UserRequest } from "../types/types";
-import { setCredentials } from "../store/authSlice";
+import type { RootState } from "../store/store";
+import { getProfile, updateProfile } from "../api/authApi";
+import type { Profile, UserRequest } from "../types/types";
+import { setUser } from "../store/authSlice";
+import type { AxiosError } from "axios";
 
 export default function ProfilePage() {
-  const { user, accessToken } = useSelector((state: RootState) => state.auth);
+  const user = useSelector((state: RootState) => state.auth.user);
   const dispatch = useDispatch();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
 
   const loadProfile = useCallback(async () => {
-    if (!accessToken) {
-      setLoading(false);
-      return;
-    }
-
-    setLoading(true);
     try {
-      const profileData: Profile = await getProfile();
-      form.setFieldsValue(profileData);
-      dispatch(setCredentials({ accessToken, user: profileData }));
-    } catch (e) {
-      message.error("Ошибка загрузки данных профиля.");
+      const profile: Profile = await getProfile();
+      dispatch(setUser(profile));
+      form.setFieldsValue(profile);
+    } catch {
+      message.error("Ошибка загрузки профиля");
     } finally {
       setLoading(false);
     }
-  }, [form, dispatch, accessToken]);
+  }, [dispatch, form]);
 
   useEffect(() => {
     if (user) {
       form.setFieldsValue(user);
       setLoading(false);
-    } else if (accessToken) {
-      loadProfile();
     } else {
-      setLoading(false);
+      loadProfile();
     }
-  }, [user, form, accessToken, loadProfile]);
+  }, [user, loadProfile, form]);
 
   const onFinish = async (values: UserRequest) => {
     setSubmitting(true);
     try {
       const updatedProfile = await updateProfile(values);
-
-      dispatch(setCredentials({ accessToken, user: updatedProfile }));
-
-      message.success("Профиль успешно обновлен!");
-    } catch (e: any) {
-      const errorMessage =
-        e.response?.data?.message || "Ошибка при обновлении профиля";
-      message.error(errorMessage);
+      dispatch(setUser(updatedProfile));
+      message.success("Профиль успешно обновлён");
+    } catch (e) {
+      const err = e as AxiosError<{ message: string }>;
+      message.error(
+        err.response?.data?.message || "Ошибка при обновлении профиля"
+      );
     } finally {
       setSubmitting(false);
     }
   };
+
   if (loading) {
     return (
       <Card
         title="Мой профиль"
-        style={{ maxWidth: 600, margin: "0 auto", marginTop: 50 }}
+        style={{ maxWidth: 600, margin: "50px auto" }}
       >
-        <Spin tip="Загрузка данных профиля...">
-          <div style={{ minHeight: 150 }} />
-        </Spin>
+        <Spin tip="Загрузка профиля..." />
       </Card>
     );
   }
 
   return (
     <Card
-      title="Мой Профиль"
-      style={{ maxWidth: 600, margin: "0 auto", marginTop: 50 }}
+      title="Мой профиль"
+      style={{ maxWidth: 600, margin: "50px auto" }}
     >
       <Form form={form} layout="vertical" onFinish={onFinish}>
         <Form.Item label="Имя пользователя" name="username">
           <Input />
         </Form.Item>
+
         <Form.Item label="Email" name="email">
           <Input disabled />
         </Form.Item>
-        <Form.Item label="Номер телефона" name="phoneNumber">
+
+        <Form.Item label="Телефон" name="phoneNumber">
           <Input />
         </Form.Item>
 
-        <Form.Item>
-          <Button type="primary" htmlType="submit" loading={submitting}>
-            Сохранить изменения
-          </Button>
-        </Form.Item>
+        <Button type="primary" htmlType="submit" loading={submitting}>
+          Сохранить
+        </Button>
       </Form>
     </Card>
   );
