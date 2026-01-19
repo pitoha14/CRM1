@@ -49,10 +49,16 @@ export default function UsersListPage() {
         title: "Действия",
         render: (_, record) => (
           <Space>
-            <Button type="link" onClick={() => navigate(`/admin/users/${record.id}`)}>
+            <Button
+              type="link"
+              onClick={() => navigate(`/admin/users/${record.id}`)}
+            >
               Профиль
             </Button>
-            <Button type="link" onClick={() => navigate(`/admin/users/${record.id}/roles`)}>
+            <Button
+              type="link"
+              onClick={() => navigate(`/admin/users/${record.id}/roles`)}
+            >
               Роли
             </Button>
           </Space>

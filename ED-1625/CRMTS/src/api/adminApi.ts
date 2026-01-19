@@ -51,3 +51,11 @@ export async function unblockUser(id: number): Promise<UserTableItem> {
 export async function deleteUser(id: number): Promise<void> {
   await api.delete(`/admin/users/${id}`);
 }
+
+export async function updateUser(
+  id: number,
+  data: UserRequest
+): Promise<UserTableItem> {
+  const response = await api.put(`/admin/users/${id}`, data);
+  return response.data;
+}

@@ -1,52 +1,45 @@
-import React, { useEffect, useState } from "react";
-import { Form, Input, Button, message, Card, Spin, Space } from "antd";
+import { useEffect, useState } from "react";
+import { Form, Input, Button, Card, message, Spin } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
+import type { UserRequest, Profile } from "../types/types";
 import { fetchUserById, updateUserData } from "../api/adminApi";
-import type { UserTableItem, UserRequest } from "../types/types";
+import { getChangedFields } from "../utils/getChangedFields";
 
 export default function EditUserPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
-  const [original, setOriginal] = useState<UserRequest>({});
+
+  const [loading, setLoading] = useState<boolean>(true);
+  const [submitting, setSubmitting] = useState<boolean>(false);
+  const [originalUser, setOriginalUser] = useState<Profile | null>(null);
+
   const userId = Number(id);
 
   useEffect(() => {
-    const load = async () => {
+    async function loadUser() {
       try {
-        const user: UserTableItem = await fetchUserById(userId);
+        const user = await fetchUserById(userId);
+        setOriginalUser(user);
         form.setFieldsValue(user);
-        setOriginal({
-          username: user.username,
-          email: user.email,
-          phoneNumber: user.phoneNumber,
-        });
       } catch {
         message.error("Ошибка загрузки пользователя");
         navigate("/admin/users");
       } finally {
         setLoading(false);
       }
-    };
-    load();
+    }
+
+    loadUser();
   }, [userId, form, navigate]);
 
   const onFinish = async (values: UserRequest) => {
-    const changes: UserRequest = {};
+    if (!originalUser) return;
 
-    if (values.username !== original.username)
-      changes.username = values.username;
+    const changes = getChangedFields(originalUser, values);
 
-    if (values.email !== original.email)
-      changes.email = values.email;
-
-    if (values.phoneNumber !== original.phoneNumber)
-      changes.phoneNumber = values.phoneNumber;
-
-    if (!Object.keys(changes).length) {
-      message.info("Нет изменений для сохранения");
+    if (Object.keys(changes).length === 0) {
+      message.info("Нет изменений");
       return;
     }
 
@@ -54,9 +47,9 @@ export default function EditUserPage() {
     try {
       await updateUserData(userId, changes);
       message.success("Пользователь обновлён");
-      setOriginal(values);
+      navigate("/admin/users");
     } catch {
-      message.error("Ошибка обновления данных");
+      message.error("Ошибка обновления пользователя");
     } finally {
       setSubmitting(false);
     }
@@ -64,45 +57,26 @@ export default function EditUserPage() {
 
   if (loading) {
     return (
-      <Card title="Профиль пользователя">
+      <Card title="Редактирование пользователя">
         <Spin />
       </Card>
     );
   }
 
   return (
-    <Card title={`Профиль пользователя (ID ${userId})`}>
+    <Card title="Редактирование пользователя">
       <Form form={form} layout="vertical" onFinish={onFinish}>
-        <Form.Item
-          name="username"
-          label="Имя пользователя"
-          rules={[{ required: true }]}
-        >
+        <Form.Item label="Имя пользователя" name="username">
           <Input />
         </Form.Item>
 
-        <Form.Item
-          name="email"
-          label="Email"
-          rules={[{ type: "email", required: true }]}
-        >
-          <Input />
+        <Form.Item label="Email" name="email">
+          <Input disabled />
         </Form.Item>
 
-        <Form.Item name="phoneNumber" label="Номер телефона">
-          <Input />
-        </Form.Item>
-
-        <Form.Item>
-          <Space>
-            <Button type="primary" htmlType="submit" loading={submitting}>
-              Сохранить
-            </Button>
-            <Button onClick={() => navigate("/admin/users")}>
-              Вернуться
-            </Button>
-          </Space>
-        </Form.Item>
+        <Button type="primary" htmlType="submit" loading={submitting}>
+          Сохранить
+        </Button>
       </Form>
     </Card>
   );

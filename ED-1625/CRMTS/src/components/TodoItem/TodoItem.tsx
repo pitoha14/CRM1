@@ -1,107 +1,32 @@
-import React, { useState } from "react";
-import { Form, Input, Button, Checkbox, message } from "antd";
+import { FC, useState } from "react";
+import { Input, Checkbox, Button, Space } from "antd";
 import type { Todo } from "../../types/types";
-import { updateTodo, deleteTodo } from "../../api/todoApi";
-import { MIN_TITLE_LENGTH, MAX_TITLE_LENGTH } from "../../constants/constant";
 
-type Props = {
+interface Props {
   todo: Todo;
-  updateTasks: () => Promise<void>;
-};
+  updateTasks: () => void;
+}
 
-export default function TodoItem({ todo, updateTasks }: Props) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [loading, setLoading] = useState(false);
-
-  const handleToggleIsDone = async () => {
-    try {
-      await updateTodo(todo.id, { isDone: !todo.isDone });
-      await updateTasks();
-    } catch {
-      message.error("Ошибка при изменении статуса задачи");
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteTodo(todo.id);
-      await updateTasks();
-      message.success("Задача удалена");
-    } catch {
-      message.error("Ошибка при удалении задачи");
-    }
-  };
-
-  const handleEditFinish = async (values: { title: string }) => {
-    const title = values.title.trim();
-    try {
-      setLoading(true);
-      await updateTodo(todo.id, { title });
-      setIsEditing(false);
-      await updateTasks();
-      message.success("Задача обновлена");
-    } catch {
-      message.error("Ошибка при обновлении задачи");
-    } finally {
-      setLoading(false);
-    }
-  };
+const TodoItem: FC<Props> = ({ todo, updateTasks }) => {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [editingTitle, setEditingTitle] = useState<string>(todo.title);
 
   return (
-    <li
-      style={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        marginBottom: 8,
-        gap: 8,
-      }}
-    >
-      <Checkbox checked={!!todo.isDone} onChange={handleToggleIsDone} style={{ flexShrink: 0 }}>
-        {!isEditing && (
-          <span style={{ textDecoration: todo.isDone ? "line-through" : "none" }}>{todo.title}</span>
-        )}
-      </Checkbox>
-
+    <Space>
+      <Checkbox checked={todo.isDone} />
       {isEditing ? (
-        <Form
-          onFinish={handleEditFinish}
-          initialValues={{ title: todo.title }}
-          style={{ display: "flex", gap: 8, flexGrow: 1, marginLeft: 8 }}
-        >
-          <Form.Item
-            name="title"
-            rules={[
-              { required: true, message: "Введите задачу" },
-              { min: MIN_TITLE_LENGTH, message: `Минимум ${MIN_TITLE_LENGTH} символа` },
-              { max: MAX_TITLE_LENGTH, message: `Максимум ${MAX_TITLE_LENGTH} символов` },
-            ]}
-            style={{ flexGrow: 1, minWidth: 0 }}
-          >
-            <Input disabled={loading} />
-          </Form.Item>
-
-          <Button type="primary" htmlType="submit" loading={loading}>
-            Сохранить
-          </Button>
-          <Button
-            onClick={() => {
-              setIsEditing(false);
-            }}
-          >
-            Отменить
-          </Button>
-        </Form>
+        <Input
+          value={editingTitle}
+          onChange={(e) => setEditingTitle(e.target.value)}
+        />
       ) : (
-        <div style={{ display: "flex", gap: 8 }}>
-          <Button type="link" onClick={() => setIsEditing(true)}>
-            Редактировать
-          </Button>
-          <Button type="link" danger onClick={handleDelete}>
-            Удалить
-          </Button>
-        </div>
+        <span>{todo.title}</span>
       )}
-    </li>
+      <Button onClick={() => setIsEditing((prev) => !prev)}>
+        {isEditing ? "Сохранить" : "Редактировать"}
+      </Button>
+    </Space>
   );
-}
+};
+
+export default TodoItem;

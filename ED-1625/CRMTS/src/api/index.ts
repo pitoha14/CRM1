@@ -34,7 +34,7 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config;
+    const originalRequest = error.config as any;
     if (originalRequest._retry) {
       return Promise.reject(error);
     }

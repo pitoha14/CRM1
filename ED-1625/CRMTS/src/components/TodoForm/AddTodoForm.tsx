@@ -9,7 +9,7 @@ type Props = {
 
 export default function AddTodoForm({ updateTasks }: Props) {
   const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
 
   const onFinish = async (values: { title: string }) => {
     const title = values.title.trim();
@@ -29,11 +29,7 @@ export default function AddTodoForm({ updateTasks }: Props) {
   };
 
   return (
-    <Form
-      form={form}
-      onFinish={onFinish}
-      style={{ marginBottom: 24 }}
-    >
+    <Form form={form} onFinish={onFinish} style={{ marginBottom: 24 }}>
       <Form.Item
         name="title"
         rules={[
@@ -43,13 +39,9 @@ export default function AddTodoForm({ updateTasks }: Props) {
         ]}
         style={{ margin: 0 }}
       >
-        <Space.Compact style={{ width: '100%' }}>
-          <Input 
-            placeholder="Введите новую задачу" 
-            disabled={loading}
-            style={{ width: '100%' }} 
-          />
-          <Button type="primary" htmlType="submit" loading={loading} style={{ flexShrink: 0 }}>
+        <Space.Compact style={{ width: "100%" }}>
+          <Input placeholder="Введите новую задачу" disabled={loading} />
+          <Button type="primary" htmlType="submit" loading={loading}>
             Добавить
           </Button>
         </Space.Compact>

@@ -1,10 +1,6 @@
-import React, { useEffect, useState } from "react";
 import { Routes, Route } from "react-router-dom";
-import { useDispatch } from "react-redux";
-import { Spin } from "antd";
 
-import { getProfile } from "./api/authApi";
-import { setUser, logout } from "./store/authSlice";
+import AuthLoader from "./components/AuthLoader/AuthLoader";
 
 import MainLayout from "./layouts/MainLayout";
 import AuthLayout from "./layouts/AuthLayout";
@@ -16,39 +12,6 @@ import RegisterPage from "./pages/RegisterPage";
 import UsersListPage from "./pages/UsersListPage";
 import EditUserPage from "./pages/EditUserPage";
 import EditUserRolesPage from "./pages/EditUserRolesPage";
-
-function AuthLoader({ children }: { children: React.ReactNode }) {
-  const dispatch = useDispatch();
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function initAuth() {
-      const refreshToken = localStorage.getItem("refreshToken");
-
-      if (!refreshToken) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        const profile = await getProfile();
-        dispatch(setUser(profile));
-      } catch {
-        dispatch(logout());
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    initAuth();
-  }, [dispatch]);
-
-  if (loading) {
-    return <Spin fullscreen tip="Загрузка..." />;
-  }
-
-  return <>{children}</>;
-}
 
 export default function App() {
   return (
