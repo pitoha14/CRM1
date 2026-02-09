@@ -22,7 +22,7 @@ const TodoItem: FC<Props> = ({ todo, updateTasks }) => {
       ) : (
         <span>{todo.title}</span>
       )}
-      <Button onClick={() => setIsEditing((prev) => !prev)}>
+      <Button onClick={() => setIsEditing((prev) => !prev)}> 
         {isEditing ? "Сохранить" : "Редактировать"}
       </Button>
     </Space>

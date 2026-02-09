@@ -10,27 +10,33 @@ import type {
 export async function registerUser(
   data: UserRegistration
 ): Promise<Profile> {
-  const response = await api.post<Profile>("/auth/signup", data);
-  return response.data;
+  const { data: response } = await api.post<Profile>("/auth/signup", data);
+  return response;
 }
 
 export async function loginUser(
   data: AuthData
 ): Promise<TokenResponse> {
-  const response = await api.post<TokenResponse>("/auth/signin", data);
-  return response.data;
+  const { data: response } = await api.post<TokenResponse>(
+    "/auth/signin",
+    data
+  );
+  return response;
 }
 
 export async function getProfile(): Promise<Profile> {
-  const response = await api.get<Profile>("/user/profile");
-  return response.data;
+  const { data } = await api.get<Profile>("/user/profile");
+  return data;
 }
 
 export async function updateProfile(
   data: UserRequest
 ): Promise<Profile> {
-  const response = await api.put<Profile>("/user/profile", data);
-  return response.data;
+  const { data: response } = await api.put<Profile>(
+    "/user/profile",
+    data
+  );
+  return response;
 }
 
 export async function logoutUserApi(): Promise<void> {

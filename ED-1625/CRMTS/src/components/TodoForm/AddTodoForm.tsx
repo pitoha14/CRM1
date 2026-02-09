@@ -33,11 +33,10 @@ export default function AddTodoForm({ updateTasks }: Props) {
       <Form.Item
         name="title"
         rules={[
-          { required: true, message: "Введите задачу" },
-          { min: MIN_TITLE_LENGTH, message: `Минимум ${MIN_TITLE_LENGTH} символа` },
-          { max: MAX_TITLE_LENGTH, message: `Максимум ${MAX_TITLE_LENGTH} символов` },
+          { required: true, whitespace: true, message: "Введите задачу" },
+          { min: MIN_TITLE_LENGTH },
+          { max: MAX_TITLE_LENGTH },
         ]}
-        style={{ margin: 0 }}
       >
         <Space.Compact style={{ width: "100%" }}>
           <Input placeholder="Введите новую задачу" disabled={loading} />

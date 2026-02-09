@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError, AxiosRequestConfig } from "axios";
 import {
   getAccessToken,
   setAccessToken,
@@ -11,6 +11,14 @@ const api = axios.create({
   baseURL: BASE_URL,
 });
 
+const refreshApi = axios.create({
+  baseURL: BASE_URL,
+});
+
+interface RetryConfig extends AxiosRequestConfig {
+  _retry?: boolean;
+}
+
 let isRefreshing = false;
 let refreshQueue: Array<(token: string) => void> = [];
 
@@ -19,26 +27,30 @@ function processQueue(token: string) {
   refreshQueue = [];
 }
 
+/* ---------- REQUEST ---------- */
 api.interceptors.request.use((config) => {
   const token = getAccessToken();
+
   if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
+
   return config;
 });
 
+/* ---------- RESPONSE ---------- */
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    if (!error.response || error.response.status !== 401) {
+  async (error: AxiosError) => {
+    if (error.response?.status !== 401) {
       return Promise.reject(error);
     }
 
-    const originalRequest = error.config as any;
-    if (originalRequest._retry) {
+    const originalRequest = error.config as RetryConfig;
+
+    if (!originalRequest || originalRequest._retry) {
       return Promise.reject(error);
     }
-    originalRequest._retry = true;
 
     const refreshToken = localStorage.getItem("refreshToken");
     if (!refreshToken) {
@@ -46,9 +58,16 @@ api.interceptors.response.use(
       return Promise.reject(error);
     }
 
+    originalRequest._retry = true;
+
     if (isRefreshing) {
-      return new Promise((resolve) => {
+      return new Promise((resolve, reject) => {
         refreshQueue.push((token) => {
+          if (!originalRequest.headers) {
+            reject(error);
+            return;
+          }
+
           originalRequest.headers.Authorization = `Bearer ${token}`;
           resolve(api(originalRequest));
         });
@@ -58,7 +77,7 @@ api.interceptors.response.use(
     isRefreshing = true;
 
     try {
-      const response = await axios.post(`${BASE_URL}/auth/refresh`, {
+      const response = await refreshApi.post("/auth/refresh", {
         refreshToken,
       });
 
@@ -68,12 +87,16 @@ api.interceptors.response.use(
       localStorage.setItem("refreshToken", newRefreshToken);
 
       processQueue(accessToken);
-      originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+
+      if (originalRequest.headers) {
+        originalRequest.headers.Authorization = `Bearer ${accessToken}`;
+      }
 
       return api(originalRequest);
     } catch {
       clearAccessToken();
       localStorage.removeItem("refreshToken");
+      refreshQueue = [];
       return Promise.reject(error);
     } finally {
       isRefreshing = false;

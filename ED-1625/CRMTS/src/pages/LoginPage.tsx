@@ -1,4 +1,3 @@
-import React from "react";
 import { Form, Input, Button, message } from "antd";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
@@ -29,7 +28,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
+    <>
       <h2 style={{ textAlign: "center" }}>Вход</h2>
       <Form layout="vertical" onFinish={onFinish}>
         <Form.Item name="login" rules={[{ required: true }]}>
@@ -45,6 +44,6 @@ export default function LoginPage() {
       <div style={{ marginTop: 10, textAlign: "center" }}>
         <Link to="/register">Регистрация</Link>
       </div>
-    </div>
+    </>
   );
 }

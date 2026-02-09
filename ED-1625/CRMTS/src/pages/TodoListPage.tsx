@@ -38,13 +38,11 @@ export default function TodoListPage() {
   return (
     <div>
             <AddTodoForm updateTasks={updateTasks} />
-           {" "}
       <TodoFilter
         filter={filter}
         setFilter={setFilter}
         todosCount={todosCount}
       />
-                 {" "}
       {isLoading ? (
         <Spin tip="Загрузка задач...">
           <div style={{ minHeight: 120 }} />
@@ -68,7 +66,6 @@ export default function TodoListPage() {
           )}
         />
       )}
-         {" "}
     </div>
   );
 }
