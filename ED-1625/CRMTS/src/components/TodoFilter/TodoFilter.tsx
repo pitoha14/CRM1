@@ -1,38 +1,26 @@
-import styles from "./TodoFilter.module.css";
+import React from "react";
+import { Menu } from "antd";
+import type { Filter, TodosCount } from "../../types/types";
 
-type filtered = 'all' | 'inWork' | 'completed';
-
-type TodoFilterProps = {
-  filter: filtered;
-  setFilter: (filter: filtered) => void;
-  todosCount: {
-    all: number;
-    inWork: number; 
-    completed: number;
-  };
+type Props = {
+  filter: Filter;
+  setFilter: (f: Filter) => void;
+  todosCount: TodosCount;
 };
 
-export default function TodoFilter({ filter, setFilter, todosCount }: TodoFilterProps) {
+export default function TodoFilter({ filter, setFilter, todosCount }: Props) {
+  const items = [
+    { key: "all", label: `Все (${todosCount.all})` },
+    { key: "inWork", label: `В работе (${todosCount.inWork})` },
+    { key: "completed", label: `Выполнено (${todosCount.completed})` },
+  ];
+
   return (
-    <div className={styles.todoFilter}>
-      <button
-        className={filter === "all" ? styles.active : ""}
-        onClick={() => setFilter("all")}
-      >
-        Все ({todosCount.all})
-      </button>
-      <button
-        className={filter === "inWork" ? styles.active : ""}
-        onClick={() => setFilter("inWork")}
-      >
-        В работе ({todosCount.inWork})
-      </button>
-      <button
-        className={filter === "completed" ? styles.active : ""}
-        onClick={() => setFilter("completed")}
-      >
-        Выполнено ({todosCount.completed})
-      </button>
-    </div>
+    <Menu
+      mode="horizontal"
+      selectedKeys={[filter]}
+      items={items}
+      onClick={(e) => setFilter(e.key as Filter)}
+    />
   );
 }

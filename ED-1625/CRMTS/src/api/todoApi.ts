@@ -1,59 +1,49 @@
-const BASE_URL = "https://easydev.club/api/v1/todos";
+import api from "./index";
+import { getAccessToken } from "./tokenService";
+import type { Todo, Filter, ApiResponse } from "../types/types";
 
-export type Todo = {
-  id: number;
-  title: string;
-  created?: string;
-  isDone?: boolean;
-};
+export async function fetchTodos(
+  filter: Filter = "all"
+): Promise<ApiResponse<Todo[]>> {
+  const token = getAccessToken();
 
-export type TodosResponse = {
-  data: Todo[];
-  info: {
-    all: number;
-    inWork: number;
-    completed: number;
-  };
-  meta?: any;
-};
-
-export async function fetchTodos(filter: string = "all"): Promise<TodosResponse> {
-  const res = await fetch(`${BASE_URL}?filter=${filter}`);
-  if (!res.ok) throw new Error("Ошибка при получении задач");
-
-  const result = await res.json();
-  if (!Array.isArray(result.data) || !result.info) {
-    throw new Error("Некорректный ответ от сервера");
+  if (!token) {
+    return { data: [] };
   }
 
-  return result;
+  const response = await api.get<ApiResponse<Todo[]>>("/todos", {
+    params: { filter },
+  });
+
+  return response.data;
 }
 
 export async function addTodo(title: string): Promise<Todo> {
-  const res = await fetch(BASE_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, isDone: false }),
-  });
-  if (!res.ok) throw new Error("Ошибка при добавлении задачи");
+  const token = getAccessToken();
+  if (!token) throw new Error("Not authorized");
 
-  const data: Todo = await res.json();
-  return data;
+  const response = await api.post<ApiResponse<Todo>>("/todos", {
+    title,
+    isDone: false,
+  });
+
+  return response.data.data;
 }
 
-export async function updateTodo(id: number, data: Partial<Todo>): Promise<Todo> {
-  const res = await fetch(`${BASE_URL}/${id}`, {
-    method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error("Ошибка при обновлении задачи");
+export async function updateTodo(
+  id: number,
+  data: Partial<Pick<Todo, "title" | "isDone">>
+): Promise<Todo> {
+  const token = getAccessToken();
+  if (!token) throw new Error("Not authorized");
 
-  const updated: Todo = await res.json();
-  return updated;
+  const response = await api.put<ApiResponse<Todo>>(`/todos/${id}`, data);
+  return response.data.data;
 }
 
 export async function deleteTodo(id: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" });
-  if (!res.ok) throw new Error("Ошибка при удалении задачи");
+  const token = getAccessToken();
+  if (!token) throw new Error("Not authorized");
+
+  await api.delete(`/todos/${id}`);
 }
